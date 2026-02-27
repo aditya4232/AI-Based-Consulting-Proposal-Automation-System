@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ProposalAI — AI Consulting Proposal Automation</title>
+  <title>Proposal Studio</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
   <script>
@@ -34,9 +34,19 @@
   <!-- ══════════════════ SIDEBAR ══════════════════ -->
   <aside id="sidebar" class="fixed inset-y-0 left-0 z-40 w-64 bg-white border-r border-gray-200 flex flex-col transform -translate-x-full lg:translate-x-0 lg:static transition-transform duration-200">
     <div class="flex items-center gap-3 px-5 py-[18px] border-b border-gray-100">
-      <div class="w-9 h-9 rounded-xl bg-brand-600 flex items-center justify-center shadow-md shadow-brand-200"><i data-lucide="sparkles" class="w-5 h-5 text-white"></i></div>
-      <div><p class="text-base font-extrabold text-brand-700 leading-tight tracking-tight">ProposalAI</p>
-        <p class="text-[10px] text-gray-400">AI Consulting Automation</p></div>
+      <!-- Geometric logomark -->
+      <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-brand-700 to-brand-500 flex items-center justify-center shadow-md shadow-brand-200 shrink-0">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="3" y="3" width="6" height="2.5" rx="1" fill="white" opacity="1"/>
+          <rect x="3" y="7.5" width="14" height="2" rx="1" fill="white" opacity="0.75"/>
+          <rect x="3" y="11.5" width="14" height="2" rx="1" fill="white" opacity="0.75"/>
+          <rect x="3" y="15" width="9" height="2" rx="1" fill="white" opacity="0.5"/>
+        </svg>
+      </div>
+      <div>
+        <p class="text-[15px] font-extrabold text-gray-900 leading-tight tracking-tight">Proposal<span class="text-brand-600">Studio</span></p>
+        <p class="text-[9px] text-gray-400 font-medium tracking-widest uppercase">Consulting Platform</p>
+      </div>
     </div>
     <nav class="flex-1 py-4 px-3 space-y-0.5 overflow-y-auto">
       <button onclick="nav('dashboard')"  data-nav="dashboard"  class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-gray-600 hover:bg-brand-50 hover:text-brand-700 transition-all">
@@ -117,7 +127,7 @@
 
         <div class="flex items-center justify-between mb-3">
           <h2 class="text-base font-bold">Recent Proposals <span class="text-gray-400 font-normal text-sm">(this device)</span></h2>
-          <button onclick="nav('generate')" class="text-xs text-brand-600 font-semibold hover:underline flex items-center gap-1"><i data-lucide="plus" class="w-3 h-3"></i> New</button>
+          <button onclick="nav('generate')" class="text-xs text-brand-600 font-semibold hover:underline flex items-center gap-1"><i data-lucide="plus" class="w-3 h-3"></i> New Proposal</button>
         </div>
         <div id="d-recent" class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden"></div>
       </section>
@@ -185,7 +195,7 @@
                 <p class="text-sm font-bold text-brand-700 flex items-center gap-1"><i data-lucide="indian-rupee" class="w-4 h-4"></i> Quick Cost Estimate (INR)</p>
                 <button type="button" onclick="$('cost-box').classList.add('hidden')" class="text-gray-400 hover:text-red-400 transition text-xs" title="Hide">&times; hide</button>
               </div>
-              <p class="text-[10px] text-amber-600 font-semibold">&#9432; Rough estimate only &mdash; updates live as you change duration &amp; users.</p>
+              <p class="text-[10px] text-amber-600 font-semibold">&#9432; Rough estimate — updates live as you change duration &amp; users.</p>
               <div class="flex justify-between text-sm text-gray-700"><span>Development</span><span id="c-dev" class="font-semibold"></span></div>
               <div class="flex justify-between text-sm text-gray-700"><span>Infrastructure</span><span id="c-infra" class="font-semibold"></span></div>
               <div class="flex justify-between text-sm text-gray-700"><span>Contingency (10%)</span><span id="c-cont" class="font-semibold"></span></div>
