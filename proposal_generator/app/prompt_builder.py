@@ -1,40 +1,57 @@
-def build_prompt(data):
-    """Build a strict JSON-only prompt that returns structured data for tables and charts."""
-    return f"""You are a senior consulting solution architect who writes concise, professional project proposals.
+"""Build a structured prompt that forces the LLM to return strict JSON."""
 
-Based on the following project details, produce a JSON object with exactly these keys:
 
-1. "executive_summary" (string): A 2-3 sentence summary of the project scope, goals, and expected business value.
+def build_prompt(data) -> str:
+    """Build a strict JSON-only prompt with anti-hallucination guardrails.
 
-2. "technical_approach" (string): A 2-3 sentence description of the system architecture and key technology choices. Mention the database, caching, and deployment strategy appropriate for the industry.
+    The prompt is deliberately precise about expected format, data types,
+    and constraints to minimise LLM improvisation.
+    """
+    total_weeks = data.duration_months * 4
+    tech_csv = ", ".join(data.tech_stack)
 
-3. "timeline" (array of objects): Each object must have:
-   - "phase" (string): Phase name, e.g. "Requirements and Design"
-   - "weeks" (integer): Number of weeks for this phase
-   - "description" (string): One sentence describing this phase's activities
+    return f"""You are a senior consulting solution architect.
 
-   The total weeks across all phases must equal exactly {data.duration_months * 4} weeks ({data.duration_months} months).
+TASK: Produce a JSON object for a project proposal.
 
-4. "risk_assessment" (array of objects): Provide exactly 3-4 risks. Each object must have:
-   - "risk" (string): Short risk title
-   - "impact" (string): one of "High", "Medium", or "Low"
-   - "mitigation" (string): One sentence mitigation strategy
-
-5. "deliverables" (array of strings): List of 4-6 key project deliverables.
-
-Project Details:
-- Project Title: {data.project_title}
+PROJECT DETAILS:
+- Title: {data.project_title}
 - Industry: {data.industry}
-- Duration: {data.duration_months} months ({data.duration_months * 4} weeks)
-- Expected Users: {data.expected_users}
-- Preferred Tech Stack: {', '.join(data.tech_stack)}
+- Duration: {data.duration_months} months ({total_weeks} weeks)
+- Expected End-Users: {data.expected_users:,}
+- Tech Stack: {tech_csv}
 
-Rules:
-- Return ONLY a valid JSON object. No markdown, no code fences, no extra text before or after.
-- Do not include special characters like **, ##, or markdown formatting in any value.
-- Keep language factual and professional. Do not exaggerate.
-- The timeline weeks must sum to exactly {data.duration_months * 4}.
-- Do not invent cost or budget numbers; cost is handled separately.
-- Ensure risk impacts are realistic for the {data.industry} industry.
+REQUIRED JSON SCHEMA (return EXACTLY this structure):
+{{
+  "executive_summary": "<string: 2-3 factual sentences about scope, goals, and expected business value>",
+  "technical_approach": "<string: 2-3 sentences about system architecture, database choice, caching layer, deployment strategy suitable for {data.industry}>",
+  "timeline": [
+    {{
+      "phase": "<string: phase name>",
+      "weeks": <integer>,
+      "description": "<string: one sentence describing activities>"
+    }}
+  ],
+  "risk_assessment": [
+    {{
+      "risk": "<string: short risk title>",
+      "impact": "<string: exactly one of High, Medium, Low>",
+      "mitigation": "<string: one sentence mitigation>"
+    }}
+  ],
+  "deliverables": ["<string>"]
+}}
 
-Output:"""
+HARD RULES:
+1. Return ONLY a raw JSON object. No markdown, no code fences, no text before or after the JSON.
+2. timeline must have 4-6 phases whose "weeks" values sum to EXACTLY {total_weeks}.
+3. risk_assessment must have EXACTLY 4 items. "impact" must be one of: "High", "Medium", "Low".
+4. deliverables must be an array of 4-6 short strings.
+5. Do NOT invent cost/budget numbers — cost is computed separately.
+6. Do NOT use markdown formatting (**, ##, ```) inside any value.
+7. Do NOT exaggerate. Keep language professional, realistic, and factual.
+8. All descriptions must be relevant to the {data.industry} industry.
+9. Do NOT repeat project details verbatim in the summary; synthesise them.
+10. Every JSON string value must be plain text — no bullet points, no lists inside strings.
+
+OUTPUT:"""

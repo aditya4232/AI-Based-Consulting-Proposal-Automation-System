@@ -1,19 +1,91 @@
-from pydantic import BaseModel
-from typing import Dict, List, Any
+"""Pydantic models for request/response validation."""
+
+from pydantic import BaseModel, Field, field_validator
+from typing import Dict, List, Any, Optional
+import re
 
 
 class ProposalRequest(BaseModel):
-    project_title: str
-    industry: str
-    duration_months: int
-    expected_users: int
-    tech_stack: List[str]
+    """Validated proposal generation request."""
+
+    project_title: str = Field(
+        ..., min_length=3, max_length=200,
+        description="Project title / name",
+    )
+    industry: str = Field(
+        ..., min_length=2, max_length=100,
+        description="Target industry vertical",
+    )
+    duration_months: int = Field(
+        ..., ge=1, le=60,
+        description="Project duration in months (1-60)",
+    )
+    expected_users: int = Field(
+        ..., ge=10, le=100_000_000,
+        description="Expected number of end users",
+    )
+    tech_stack: List[str] = Field(
+        ..., min_length=1, max_length=15,
+        description="Preferred technology stack items",
+    )
+    client_name: Optional[str] = Field(
+        None, max_length=200,
+        description="Optional client / company name for the proposal",
+    )
+
+    @field_validator("project_title", "industry")
+    @classmethod
+    def strip_and_clean(cls, v: str) -> str:
+        """Remove leading/trailing whitespace and collapse internal spaces."""
+        v = re.sub(r"\s+", " ", v.strip())
+        if not v:
+            raise ValueError("Field cannot be blank")
+        return v
+
+    @field_validator("tech_stack")
+    @classmethod
+    def clean_tech_stack(cls, v: list[str]) -> list[str]:
+        cleaned = [item.strip() for item in v if item.strip()]
+        if not cleaned:
+            raise ValueError("tech_stack must contain at least one item")
+        return cleaned
+
+
+class TimelinePhase(BaseModel):
+    """Single phase in the project timeline."""
+    phase: str
+    weeks: int
+    description: str
+
+
+class RiskItem(BaseModel):
+    """Single risk entry."""
+    risk: str
+    impact: str
+    mitigation: str
 
 
 class ProposalResponse(BaseModel):
+    """Full proposal response."""
     executive_summary: str
     technical_approach: str
-    timeline: Any  # can be list of phase dicts or string
+    timeline: Any  # list[TimelinePhase] or str fallback
     estimated_cost: Dict[str, Any]
-    risk_assessment: Any  # can be list of risk dicts or string
-    deliverables: Any  # can be list of strings or string
+    risk_assessment: Any  # list[RiskItem] or str fallback
+    deliverables: Any  # list[str] or str fallback
+    team_composition: Optional[List[Dict[str, Any]]] = None
+
+
+class HealthResponse(BaseModel):
+    """Health check response."""
+    status: str
+    version: str
+    uptime_seconds: float
+
+
+class ProposalHistoryItem(BaseModel):
+    """Single item from proposal history."""
+    filename: str
+    created_at: str
+    size_kb: float
+    download_url: str
