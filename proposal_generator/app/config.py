@@ -17,7 +17,7 @@ class Settings:
         "GROQ_API_URL", "https://api.groq.com/openai/v1/chat/completions"
     )
     groq_api_key: str = os.environ.get(
-        "GROQ_API_KEY", "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"
+        "GROQ_API_KEY", ""
     )
     groq_model: str = os.environ.get("GROQ_MODEL", "llama-3.1-8b-instant")
     groq_temperature: float = float(os.environ.get("GROQ_TEMPERATURE", "0.05"))

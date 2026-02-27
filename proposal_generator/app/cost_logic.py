@@ -24,11 +24,19 @@ def estimate_team_composition(
 
     # Backend developers: 1 per 3 months, min 1
     backend_count = max(1, ceil(duration_months / 3))
-    team.append({"role": "Backend Developer", "count": backend_count, "allocation": "Full-time"})
+    team.append(
+        {"role": "Backend Developer", "count": backend_count, "allocation": "Full-time"}
+    )
 
     # Frontend developers: 1 per 4 months, min 1
     frontend_count = max(1, ceil(duration_months / 4))
-    team.append({"role": "Frontend Developer", "count": frontend_count, "allocation": "Full-time"})
+    team.append(
+        {
+            "role": "Frontend Developer",
+            "count": frontend_count,
+            "allocation": "Full-time",
+        }
+    )
 
     # QA engineer: always at least 1
     qa_count = 1 if duration_months <= 4 else 2
@@ -39,14 +47,24 @@ def estimate_team_composition(
         team.append({"role": "DevOps Engineer", "count": 1, "allocation": "Part-time"})
 
     # UI/UX designer for any project with a frontend stack
-    frontend_stacks = {"react", "vue.js", "vue", "angular", "next.js", "svelte", "flutter"}
+    frontend_stacks = {
+        "react",
+        "vue.js",
+        "vue",
+        "angular",
+        "next.js",
+        "svelte",
+        "flutter",
+    }
     has_frontend = any(t.lower() in frontend_stacks for t in tech_stack)
     if has_frontend:
         team.append({"role": "UI/UX Designer", "count": 1, "allocation": "Part-time"})
 
     # Database admin for large user bases
     if expected_users >= 10000:
-        team.append({"role": "Database Administrator", "count": 1, "allocation": "Part-time"})
+        team.append(
+            {"role": "Database Administrator", "count": 1, "allocation": "Part-time"}
+        )
 
     return team
 
@@ -54,26 +72,27 @@ def estimate_team_composition(
 def calculate_cost(
     duration_months: int,
     expected_users: int,
-    dev_rate_per_month: float = 20000.0,
+    dev_rate_per_month: float = 150000.0,  # INR per month (reduced from USD)
     contingency_pct: float = 0.10,
     discount_pct: float = 0.0,
 ):
-    """Return a detailed cost breakdown.
+    """Return a detailed cost breakdown in INR.
 
     - Uses tiered per-user infra pricing.
     - Applies contingency to development cost.
     - Applies an optional overall discount.
+    - All values in Indian Rupees (INR)
     """
 
     base_dev_cost = float(dev_rate_per_month) * duration_months
 
-    # Tiered infra cost per user (simple predictable tiers)
+    # Tiered infra cost per user in INR (converted from USD: 1 USD ~ 83 INR)
     if expected_users <= 1000:
-        infra_per_user = 0.50
+        infra_per_user = 42.0  # 0.50 USD * 83
     elif expected_users <= 10000:
-        infra_per_user = 0.35
+        infra_per_user = 29.0  # 0.35 USD * 83
     else:
-        infra_per_user = 0.20
+        infra_per_user = 17.0  # 0.20 USD * 83
 
     infra_cost = expected_users * infra_per_user
 
@@ -93,6 +112,7 @@ def calculate_cost(
         "discount": round(discount, 2),
         "total_estimated_cost": round(total, 2),
         "monthly_average": round(monthly_average, 2),
+        "currency": "INR",
         "details": {
             "duration_months": int(duration_months),
             "expected_users": int(expected_users),
@@ -114,7 +134,12 @@ def _resolve_output_dir(provided_dir: str | None) -> str:
     # Base directory that output directories must be under. This prevents path traversal.
     base_root = os.path.abspath(os.environ.get("COST_OUTPUT_BASE", os.getcwd()))
 
-    candidates = [provided_dir, env_dir, os.path.join(os.getcwd(), "outputs"), tempfile.gettempdir()]
+    candidates = [
+        provided_dir,
+        env_dir,
+        os.path.join(os.getcwd(), "outputs"),
+        tempfile.gettempdir(),
+    ]
 
     for c in candidates:
         if not c:
@@ -166,10 +191,14 @@ def _resolve_output_dir(provided_dir: str | None) -> str:
         return os.path.abspath(tempfile.gettempdir())
 
     # Strict mode: do not fall back outside base_root
-    raise RuntimeError("No writable output directory found within allowed base; set COST_ALLOW_SYSTEM_TEMP=1 to permit system temp fallback.")
+    raise RuntimeError(
+        "No writable output directory found within allowed base; set COST_ALLOW_SYSTEM_TEMP=1 to permit system temp fallback."
+    )
 
 
-def save_cost_report(cost_data: dict, output_dir: str | None = None, prefix: str | None = None) -> dict:
+def save_cost_report(
+    cost_data: dict, output_dir: str | None = None, prefix: str | None = None
+) -> dict:
     """Save `cost_data` as JSON and CSV in `output_dir` and return file paths.
 
     `output_dir` can be None to let the function resolve a safe writable location.

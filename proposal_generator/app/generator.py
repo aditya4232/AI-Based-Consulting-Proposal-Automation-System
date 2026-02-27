@@ -110,13 +110,18 @@ def _validate_risk_impact(risks: list) -> list:
 # ====================================================================== #
 
 def _get_active_ollama_model(base_url: str) -> str:
-    """Fetch the first available model from Ollama."""
+    """Fetch the first available LOCAL model from Ollama (skip cloud models)."""
     try:
         url = base_url.rstrip("/") + "/api/tags"
         resp = requests.get(url, timeout=5)
         resp.raise_for_status()
         models = resp.json().get("models", [])
+        # Filter out cloud models
+        local_models = [m for m in models if ":cloud" not in m.get("name", "")]
+        if local_models:
+            return local_models[0]["name"]
         if models:
+            log.warning("Only cloud models available, using first model: %s", models[0]["name"])
             return models[0]["name"]
     except Exception as e:
         log.warning("Could not automatically detect Ollama model: %s", e)

@@ -245,7 +245,10 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Magic Prompt Parser ---
     document.getElementById('magic-btn').addEventListener('click', () => {
         const txt = document.getElementById('magic-prompt').value;
-        if (!txt) return;
+        if (!txt) {
+            showToast('Please enter a prompt first!', 'error');
+            return;
+        }
 
         // Simple heuristic parser
         let titleMatch = txt.match(/for (.*?) in/i) || txt.match(/for (.*)/i);

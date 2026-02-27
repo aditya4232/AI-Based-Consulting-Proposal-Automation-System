@@ -1,398 +1,1141 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>AI Proposal Generator</title>
-    <!-- Google Fonts -->
-    <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700&display=swap"
-      rel="stylesheet"
-    />
-    <!-- Font Awesome for Icons -->
-    <link
-      rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
-    />
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ProposalAI — AI Consulting Proposal Automation</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+  <script>
+    tailwind.config = {
+      theme: { extend: {
+        colors: {
+          brand: { 50:'#f5f3ff',100:'#ede9fe',200:'#ddd6fe',300:'#c4b5fd',400:'#a78bfa',500:'#8b5cf6',600:'#7c3aed',700:'#6d28d9',800:'#5b21b6',900:'#4c1d95' }
+        },
+        fontFamily: { sans: ['Inter','system-ui','sans-serif'] }
+      }}
+    }
+  </script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    .fade-in{animation:fadeIn .3s ease}@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+    .slide-in{animation:slideIn .28s ease}@keyframes slideIn{from{transform:translateX(110%);opacity:0}to{transform:translateX(0);opacity:1}}
+    .spin{animation:spin 1s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}
+    .modal-enter{animation:modalIn .2s ease}@keyframes modalIn{from{opacity:0;transform:scale(.95)}to{opacity:1;transform:scale(1)}}
+    ::-webkit-scrollbar{width:5px}::-webkit-scrollbar-thumb{background:#c4b5fd;border-radius:99px}
+  </style>
+</head>
+<body class="h-full bg-gray-50 font-sans text-gray-900 antialiased">
+<div id="app" class="flex h-full min-h-screen">
 
-    <link rel="stylesheet" href="/static/css/style.css" />
-  </head>
-  <body>
-    <!-- Abstract Background Elements -->
-    <div class="bg-gradient fixed"></div>
-    <div class="bg-blur top-left fixed"></div>
-    <div class="bg-blur bottom-right fixed"></div>
+  <!-- Mobile overlay -->
+  <div id="sb-overlay" class="fixed inset-0 z-30 bg-black/40 hidden lg:hidden" onclick="closeSidebar()"></div>
 
-    <div class="app-container">
-      <!-- Sidebar Navigation -->
-      <nav class="sidebar glass-panel">
-        <div class="logo">
-          <i class="fa-solid fa-sparkles text-accent"></i>
-          <h2>ProposeAI</h2>
-        </div>
-
-        <ul class="nav-links">
-          <li class="active" data-target="dashboard">
-            <i class="fa-solid fa-house"></i>
-            <span>Dashboard</span>
-          </li>
-          <li data-target="generate">
-            <i class="fa-solid fa-wand-magic-sparkles"></i>
-            <span>Generate</span>
-          </li>
-          <li data-target="history">
-            <i class="fa-solid fa-clock-rotate-left"></i>
-            <span>History</span>
-          </li>
-          <li data-target="settings">
-            <i class="fa-solid fa-gear"></i>
-            <span>Settings</span>
-          </li>
-          <li onclick="window.location.href = '/static/instruction.html'">
-            <i class="fa-solid fa-book-open"></i>
-            <span>Instructions</span>
-          </li>
-        </ul>
-
-        <div class="user-status">
-          <div class="status-indicator online"></div>
-          <div class="status-info">
-            <span class="status-label">API Status</span>
-            <span class="status-text" id="api-status">Connecting...</span>
-          </div>
-        </div>
-      </nav>
-
-      <!-- Main Content Area -->
-      <main class="main-content">
-        <!-- Top Search Bar (Inspired by Lantern AI) -->
-        <header class="top-nav glass-panel">
-          <div class="search-container">
-            <span class="ai-badge">BETA</span>
-            <div class="search-input-wrapper">
-              <input
-                type="text"
-                placeholder="Generate a full proposal for e.g. Acme Inc's Cloud Migration in 6 months..."
-                id="magic-prompt"
-              />
-              <i
-                class="fa-solid fa-wand-magic-sparkles search-icon text-accent"
-              ></i>
-              <button class="search-btn" id="magic-btn">Magic Generate</button>
-            </div>
-          </div>
-        </header>
-
-        <!-- Views Container -->
-        <div class="views">
-          <!-- View: Dashboard -->
-          <section id="view-dashboard" class="view active">
-            <div class="welcome-header">
-              <h1>Welcome back 👋</h1>
-              <p>
-                Generate precise, deterministic consulting proposals with AI.
-                <a href="/static/instruction.html">Read the instructions</a>.
-              </p>
-            </div>
-
-            <div class="dashboard-stats">
-              <div class="stat-card glass-panel">
-                <div class="stat-icon purple">
-                  <i class="fa-solid fa-file-invoice"></i>
-                </div>
-                <div class="stat-content">
-                  <h3>Total Generated</h3>
-                  <p id="stat-total">--</p>
-                </div>
-              </div>
-              <div class="stat-card glass-panel">
-                <div class="stat-icon green">
-                  <i class="fa-solid fa-server"></i>
-                </div>
-                <div class="stat-content">
-                  <h3>Active Provider</h3>
-                  <p id="stat-provider">Ollama</p>
-                </div>
-              </div>
-            </div>
-
-            <div class="recent-section">
-              <h2>Recent Activity</h2>
-              <div class="filters">
-                <button class="filter-btn active">All</button>
-                <button class="filter-btn">PDFs</button>
-                <button class="filter-btn">Drafts</button>
-              </div>
-              <div class="recent-grid" id="recent-grid">
-                <!-- Cards populated by JS -->
-                <div class="loading-pulse">Loading recent proposals...</div>
-              </div>
-            </div>
-          </section>
-
-          <!-- View: Generate -->
-          <section id="view-generate" class="view hidden">
-            <div class="view-header">
-              <h2>Create New Proposal</h2>
-              <p>
-                Fill out the fields or use the Magic Prompt to draft
-                automatically.
-              </p>
-            </div>
-
-            <div class="generate-layout">
-              <form id="proposal-form" class="glass-panel form-panel">
-                <div class="form-group row">
-                  <div class="col">
-                    <label for="project_title">Project Title</label>
-                    <input
-                      type="text"
-                      id="project_title"
-                      name="project_title"
-                      required
-                      placeholder="e.g. ERP Cloud Migration"
-                    />
-                  </div>
-                  <div class="col">
-                    <label for="client_name">Client / Company Name</label>
-                    <input
-                      type="text"
-                      id="client_name"
-                      name="client_name"
-                      placeholder="e.g. Acme Corporation"
-                    />
-                  </div>
-                </div>
-
-                <div class="form-group row">
-                  <div class="col">
-                    <label for="industry">Industry</label>
-                    <input
-                      type="text"
-                      id="industry"
-                      name="industry"
-                      required
-                      placeholder="e.g. Healthcare, Finance"
-                    />
-                  </div>
-                  <div class="col">
-                    <label for="expected_users">Expected End Users</label>
-                    <input
-                      type="number"
-                      id="expected_users"
-                      name="expected_users"
-                      required
-                      min="10"
-                      placeholder="e.g. 5000"
-                    />
-                  </div>
-                  <div class="col">
-                    <label for="duration_months">Duration (Months)</label>
-                    <input
-                      type="number"
-                      id="duration_months"
-                      name="duration_months"
-                      required
-                      min="1"
-                      max="60"
-                      placeholder="e.g. 6"
-                    />
-                  </div>
-                </div>
-
-                <div class="form-group">
-                  <label for="tech_stack">Tech Stack (Comma separated)</label>
-                  <input
-                    type="text"
-                    id="tech_stack"
-                    name="tech_stack"
-                    required
-                    placeholder="e.g. AWS, React, Python, PostgreSQL"
-                  />
-                </div>
-
-                <div class="form-actions">
-                  <button
-                    type="button"
-                    class="btn btn-secondary"
-                    id="btn-draft"
-                  >
-                    Preview Draft (JSON)
-                  </button>
-                  <button
-                    type="submit"
-                    class="btn btn-primary"
-                    id="btn-generate-pdf"
-                  >
-                    Generate PDF Proposal
-                  </button>
-                </div>
-              </form>
-
-              <div class="preview-panel glass-panel" id="preview-panel">
-                <div class="preview-empty">
-                  <i class="fa-solid fa-file-lines fa-3x text-muted"></i>
-                  <p>Generated draft will appear here</p>
-                </div>
-                <div class="preview-content hidden" id="preview-content">
-                  <!-- Populated by JS -->
-                </div>
-              </div>
-            </div>
-          </section>
-
-          <!-- View: History -->
-          <section id="view-history" class="view hidden">
-            <div class="view-header">
-              <h2>Proposal History</h2>
-              <button class="btn btn-sm btn-outline" id="btn-refresh-history">
-                <i class="fa-solid fa-rotate-right"></i> Refresh
-              </button>
-            </div>
-            <div class="history-list glass-panel" id="history-container">
-              <div class="loading-pulse">Loading history...</div>
-            </div>
-          </section>
-
-          <!-- View: Settings -->
-          <section id="view-settings" class="view hidden">
-            <div class="view-header">
-              <h2>API Settings</h2>
-              <p>
-                Configure which LLM provider to use.
-                <strong>Ollama is prioritized by default.</strong>
-              </p>
-            </div>
-
-            <div class="settings-panel glass-panel">
-              <form id="settings-form">
-                <div class="form-group">
-                  <label for="provider">AI Provider</label>
-                  <div class="provider-cards">
-                    <label class="provider-card">
-                      <input
-                        type="radio"
-                        name="provider"
-                        value="ollama"
-                        checked
-                      />
-                      <div class="provider-content">
-                        <i class="fa-solid fa-server"></i>
-                        <h4>Ollama (Local)</h4>
-                        <span class="badge primary">Default</span>
-                      </div>
-                    </label>
-                    <label class="provider-card">
-                      <input type="radio" name="provider" value="groq" />
-                      <div class="provider-content">
-                        <i class="fa-solid fa-bolt"></i>
-                        <h4>Groq</h4>
-                      </div>
-                    </label>
-                    <label class="provider-card">
-                      <input type="radio" name="provider" value="openai" />
-                      <div class="provider-content">
-                        <i class="fa-solid fa-brain"></i>
-                        <h4>OpenAI</h4>
-                      </div>
-                    </label>
-                  </div>
-                </div>
-
-                <div class="conditional-settings" id="settings-ollama">
-                  <div class="form-group row">
-                    <div class="col">
-                      <label for="ollama_url">Ollama Base URL</label>
-                      <input
-                        type="url"
-                        id="ollama_url"
-                        name="ollama_url"
-                        placeholder="http://localhost:11434"
-                        value="http://localhost:11434"
-                      />
-                      <small
-                        >Must be running locally or externally
-                        accessible.</small
-                      >
-                    </div>
-                    <div class="col">
-                      <label for="ollama_model">Model Name (Optional)</label>
-                      <input
-                        type="text"
-                        id="ollama_model"
-                        name="ollama_model"
-                        placeholder="e.g. llama3"
-                      />
-                      <small>Leave blank to auto-detect running model.</small>
-                    </div>
-                  </div>
-                </div>
-
-                <div class="conditional-settings hidden" id="settings-external">
-                  <div class="form-group">
-                    <label for="api_key">API Key</label>
-                    <input
-                      type="password"
-                      id="api_key"
-                      name="api_key"
-                      placeholder="Enter your API key here (sk-...)"
-                    />
-                    <small class="text-warning"
-                      ><i class="fa-solid fa-triangle-exclamation"></i> Required
-                      for Groq or OpenAI</small
-                    >
-                  </div>
-                  <div class="form-group row">
-                    <div class="col">
-                      <label for="ext_model">Model Name</label>
-                      <input
-                        type="text"
-                        id="ext_model"
-                        name="ext_model"
-                        placeholder="e.g. llama-3.1-8b-instant or gpt-4o-mini"
-                      />
-                    </div>
-                    <div class="col">
-                      <label for="ext_url"
-                        >Custom Endpoint URL (Optional)</label
-                      >
-                      <input
-                        type="url"
-                        id="ext_url"
-                        name="ext_url"
-                        placeholder="Default used if empty"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <button
-                  type="button"
-                  class="btn btn-primary"
-                  id="btn-save-settings"
-                >
-                  Save Settings
-                </button>
-              </form>
-            </div>
-          </section>
-        </div>
-      </main>
+  <!-- ══════════════════ SIDEBAR ══════════════════ -->
+  <aside id="sidebar" class="fixed inset-y-0 left-0 z-40 w-64 bg-white border-r border-gray-200 flex flex-col transform -translate-x-full lg:translate-x-0 lg:static transition-transform duration-200">
+    <div class="flex items-center gap-3 px-5 py-[18px] border-b border-gray-100">
+      <div class="w-9 h-9 rounded-xl bg-brand-600 flex items-center justify-center shadow-md shadow-brand-200"><i data-lucide="sparkles" class="w-5 h-5 text-white"></i></div>
+      <div><p class="text-base font-extrabold text-brand-700 leading-tight tracking-tight">ProposalAI</p>
+        <p class="text-[10px] text-gray-400">AI Consulting Automation</p></div>
     </div>
-
-    <!-- Overlay Loader -->
-    <div class="fullscreen-loader hidden" id="loader">
-      <div class="loader-content">
-        <div class="spinner"></div>
-        <h3 id="loader-text">Generating...</h3>
-        <p>Combining structural constraints with generative AI.</p>
+    <nav class="flex-1 py-4 px-3 space-y-0.5 overflow-y-auto">
+      <button onclick="nav('dashboard')"  data-nav="dashboard"  class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-gray-600 hover:bg-brand-50 hover:text-brand-700 transition-all">
+        <i data-lucide="layout-dashboard" class="w-4 h-4 shrink-0"></i> Dashboard
+      </button>
+      <button onclick="nav('generate')"   data-nav="generate"   class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-gray-600 hover:bg-brand-50 hover:text-brand-700 transition-all">
+        <i data-lucide="wand-2"           class="w-4 h-4 shrink-0"></i> Generate
+      </button>
+      <button onclick="nav('history')"    data-nav="history"    class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-gray-600 hover:bg-brand-50 hover:text-brand-700 transition-all">
+        <i data-lucide="history"          class="w-4 h-4 shrink-0"></i> History
+      </button>
+      <button onclick="nav('settings')"   data-nav="settings"   class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-gray-600 hover:bg-brand-50 hover:text-brand-700 transition-all">
+        <i data-lucide="settings"         class="w-4 h-4 shrink-0"></i> Settings
+      </button>
+    </nav>
+    <!-- Provider Status Card -->
+    <div class="p-4 border-t border-gray-100">
+      <div class="bg-gradient-to-br from-brand-50 to-blue-50 rounded-xl p-3 space-y-1">
+        <div class="flex items-center justify-between">
+          <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Current AI</span>
+          <span id="sb-dot" class="w-2 h-2 rounded-full bg-gray-300"></span>
+        </div>
+        <p id="sb-prov" class="text-sm font-bold text-gray-800 truncate">&mdash;</p>
+        <p id="sb-model" class="text-xs text-gray-500 truncate">&mdash;</p>
+      </div>
+      <div class="mt-2 px-1">
+        <p class="text-[9px] text-gray-300 truncate" id="sb-device">Device: &hellip;</p>
       </div>
     </div>
+  </aside>
 
-    <!-- Toast Notifications -->
-    <div id="toast-container" class="toast-container"></div>
+  <!-- ══════════════════ MAIN ══════════════════ -->
+  <div class="flex-1 flex flex-col min-w-0 overflow-hidden">
 
-    <script src="/static/js/api.js"></script>
-    <script src="/static/js/app.js"></script>
-  </body>
+    <!-- Top Bar -->
+    <header class="sticky top-0 z-20 bg-white/80 backdrop-blur-sm border-b border-gray-200 px-4 sm:px-6 py-3 flex items-center gap-3">
+      <button onclick="openSidebar()" class="lg:hidden p-2 -ml-2 rounded-xl hover:bg-gray-100 transition">
+        <i data-lucide="menu" class="w-5 h-5"></i>
+      </button>
+      <!-- Magic Prompt -->
+      <div class="flex-1 flex items-center gap-2 bg-brand-50 border border-brand-100 rounded-full pl-4 pr-1 py-1">
+        <span class="hidden sm:inline text-[9px] font-extrabold text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full uppercase tracking-wide">AI</span>
+        <input id="magic-input" type="text" placeholder="Describe your project… e.g. Build a healthcare portal for 10k patients using React, Django, AWS" class="flex-1 bg-transparent text-sm outline-none placeholder:text-gray-400 min-w-0 py-0.5">
+        <button onclick="magicFill()" class="bg-brand-600 hover:bg-brand-700 text-white text-[11px] font-bold rounded-full px-4 py-2 flex items-center gap-1.5 transition-all whitespace-nowrap shadow-sm">
+          <i data-lucide="sparkles" class="w-3.5 h-3.5"></i><span class="hidden sm:inline">Magic Fill</span><span class="sm:hidden">Go</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Page Container -->
+    <main class="flex-1 overflow-y-auto pb-20">
+
+      <!-- ══ DASHBOARD ══ -->
+      <section id="view-dashboard" class="view hidden p-4 sm:p-6 lg:p-8 fade-in">
+        <div class="mb-6">
+          <h1 class="text-2xl sm:text-3xl font-extrabold">Dashboard</h1>
+          <p class="text-gray-500 mt-1 text-sm">Your proposal activity and AI status at a glance.</p>
+        </div>
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-8">
+          <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-brand-100 text-brand-600 flex items-center justify-center shrink-0"><i data-lucide="file-text" class="w-5 h-5"></i></div>
+            <div><p class="text-[11px] text-gray-400 font-semibold uppercase tracking-wide">Proposals</p><p id="d-total" class="text-2xl font-extrabold">0</p></div>
+          </div>
+          <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0"><i data-lucide="server" class="w-5 h-5"></i></div>
+            <div><p class="text-[11px] text-gray-400 font-semibold uppercase tracking-wide">Provider</p><p id="d-prov" class="text-base font-bold truncate">&mdash;</p></div>
+          </div>
+          <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center shrink-0"><i data-lucide="cpu" class="w-5 h-5"></i></div>
+            <div><p class="text-[11px] text-gray-400 font-semibold uppercase tracking-wide">Model</p><p id="d-model" class="text-base font-bold truncate">&mdash;</p></div>
+          </div>
+          <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center shrink-0"><i data-lucide="activity" class="w-5 h-5"></i></div>
+            <div><p class="text-[11px] text-gray-400 font-semibold uppercase tracking-wide">Status</p><p id="d-status" class="text-base font-bold">&mdash;</p></div>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-between mb-3">
+          <h2 class="text-base font-bold">Recent Proposals <span class="text-gray-400 font-normal text-sm">(this device)</span></h2>
+          <button onclick="nav('generate')" class="text-xs text-brand-600 font-semibold hover:underline flex items-center gap-1"><i data-lucide="plus" class="w-3 h-3"></i> New</button>
+        </div>
+        <div id="d-recent" class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden"></div>
+      </section>
+
+      <!-- ══ GENERATE ══ -->
+      <section id="view-generate" class="view hidden p-4 sm:p-6 lg:p-8 fade-in">
+        <div class="mb-5">
+          <h2 class="text-xl sm:text-2xl font-extrabold">Generate Proposal</h2>
+          <p class="text-gray-500 mt-0.5 text-sm">Fill in details or use Magic Fill above for instant pre-filling.</p>
+        </div>
+        <div class="grid grid-cols-1 xl:grid-cols-2 gap-5">
+          <!-- Form -->
+          <form id="prop-form" class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4">
+            <!-- Model select row (live from settings) -->
+            <div class="bg-brand-50 rounded-xl px-4 py-3 flex flex-wrap items-center gap-3">
+              <div class="flex items-center gap-2 text-sm font-semibold text-brand-700">
+                <i data-lucide="cpu" class="w-4 h-4"></i> AI Model:
+              </div>
+              <select id="gen-model-sel" class="flex-1 min-w-[140px] bg-white border border-brand-200 rounded-lg px-3 py-1.5 text-sm text-gray-800 focus:ring-2 focus:ring-brand-400 outline-none" onchange="onGenModelChange(this.value)">
+                <option value="">Loading models&hellip;</option>
+              </select>
+              <button type="button" onclick="refreshGenModels()" title="Refresh models" class="p-1.5 rounded-lg hover:bg-brand-100 text-brand-600 transition">
+                <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+              </button>
+            </div>
+
+            <div>
+              <label class="label">Project Title <span class="text-red-500">*</span></label>
+              <input id="f-title" type="text" required minlength="3" class="inp" placeholder="e.g. Healthcare Patient Portal">
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label class="label">Client / Company</label>
+                <input id="f-client" type="text" class="inp" placeholder="e.g. MedCare Inc.">
+              </div>
+              <div>
+                <label class="label">Industry <span class="text-red-500">*</span></label>
+                <input id="f-industry" type="text" required class="inp" placeholder="e.g. Healthcare">
+              </div>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label class="label">Duration (months) <span class="text-red-500">*</span></label>
+                <input id="f-months" type="number" required min="1" max="60" class="inp" placeholder="e.g. 6" oninput="liveUpdateCost()">
+              </div>
+              <div>
+                <label class="label">Expected Users <span class="text-red-500">*</span></label>
+                <input id="f-users" type="number" required min="10" class="inp" placeholder="e.g. 10000" oninput="liveUpdateCost()">
+              </div>
+            </div>
+            <div>
+              <label class="label">Tech Stack <span class="text-red-500">*</span></label>
+              <input id="f-stack" type="text" required class="inp" placeholder="e.g. React, Django, PostgreSQL, AWS">
+              <p class="text-[11px] text-gray-400 mt-1">Comma-separated technologies</p>
+            </div>
+            <div>
+              <label class="label">Custom Details / Additional Requirements</label>
+              <textarea id="f-notes" rows="3" class="inp resize-none" placeholder="Optional: special requirements, constraints, integrations, compliance needs, specific features to include…"></textarea>
+              <p class="text-[11px] text-gray-400 mt-1">AI will include these notes into the proposal research.</p>
+            </div>
+
+            <!-- Cost Preview -->
+            <div id="cost-box" class="hidden bg-gradient-to-br from-brand-50 to-blue-50 rounded-xl p-4 border border-brand-100 space-y-1.5">
+              <div class="flex items-center justify-between">
+                <p class="text-sm font-bold text-brand-700 flex items-center gap-1"><i data-lucide="indian-rupee" class="w-4 h-4"></i> Quick Cost Estimate (INR)</p>
+                <button type="button" onclick="$('cost-box').classList.add('hidden')" class="text-gray-400 hover:text-red-400 transition text-xs" title="Hide">&times; hide</button>
+              </div>
+              <p class="text-[10px] text-amber-600 font-semibold">&#9432; Rough estimate only &mdash; updates live as you change duration &amp; users.</p>
+              <div class="flex justify-between text-sm text-gray-700"><span>Development</span><span id="c-dev" class="font-semibold"></span></div>
+              <div class="flex justify-between text-sm text-gray-700"><span>Infrastructure</span><span id="c-infra" class="font-semibold"></span></div>
+              <div class="flex justify-between text-sm text-gray-700"><span>Contingency (10%)</span><span id="c-cont" class="font-semibold"></span></div>
+              <div class="flex justify-between text-sm font-extrabold text-brand-700 border-t border-brand-200 pt-1.5">
+                <span>Total</span><span id="c-total"></span>
+              </div>
+            </div>
+
+            <div class="flex flex-wrap gap-2 pt-1">
+              <button type="button" onclick="estimateCost()" class="btn-outline"><i data-lucide="calculator" class="w-3.5 h-3.5"></i> Estimate Cost</button>
+              <button type="button" onclick="genJSON()" class="btn-outline"><i data-lucide="braces" class="w-3.5 h-3.5"></i> Preview JSON</button>
+              <button type="submit" class="btn-primary"><i data-lucide="file-down" class="w-3.5 h-3.5"></i> Generate &amp; Download PDF</button>
+            </div>
+          </form>
+
+          <!-- Preview Panel -->
+          <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 flex flex-col min-h-[280px]">
+            <div id="prev-empty" class="flex-1 flex flex-col items-center justify-center text-gray-300 gap-3">
+              <i data-lucide="file-search" class="w-14 h-14 opacity-30"></i>
+              <p class="text-sm">Click <b class="text-gray-400">Preview JSON</b> to see the AI output here</p>
+            </div>
+            <pre id="prev-json" class="hidden flex-1 bg-gray-900 text-emerald-300 rounded-xl p-4 text-xs overflow-auto whitespace-pre-wrap leading-relaxed font-mono"></pre>
+          </div>
+        </div>
+      </section>
+
+      <!-- ══ HISTORY ══ -->
+      <section id="view-history" class="view hidden p-4 sm:p-6 lg:p-8 fade-in">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
+          <div>
+            <h2 class="text-xl sm:text-2xl font-extrabold">Proposal History</h2>
+            <p class="text-gray-500 text-sm mt-0.5">Persistent across sessions via your device ID.</p>
+          </div>
+          <button onclick="loadHistory()" class="btn-outline self-start"><i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i> Refresh</button>
+        </div>
+        <div id="hist-list" class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+          <div class="py-16 text-center text-gray-400 text-sm">Loading&hellip;</div>
+        </div>
+      </section>
+
+      <!-- ══ SETTINGS ══ -->
+      <section id="view-settings" class="view hidden p-4 sm:p-6 lg:p-8 fade-in">
+        <div class="mb-5">
+          <h2 class="text-xl sm:text-2xl font-extrabold">AI Provider Settings</h2>
+          <p class="text-gray-500 text-sm mt-0.5">Configure which model powers your proposals.</p>
+        </div>
+        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 sm:p-6 max-w-3xl space-y-6">
+
+          <!-- Provider selector -->
+          <div>
+            <p class="text-sm font-bold mb-3 flex items-center gap-2"><i data-lucide="layers" class="w-4 h-4 text-brand-600"></i> Select Provider</p>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <label class="cursor-pointer">
+                <input type="radio" name="prov" value="ollama" class="hidden peer" checked>
+                <div class="border-2 peer-checked:border-brand-500 peer-checked:bg-brand-50 border-gray-200 rounded-xl p-4 text-center transition hover:border-brand-300">
+                  <i data-lucide="hard-drive" class="w-5 h-5 mx-auto mb-1.5 text-gray-400"></i>
+                  <p class="text-sm font-semibold">Ollama</p>
+                  <span class="text-[9px] bg-brand-100 text-brand-700 font-bold px-2 py-0.5 rounded-full mt-1 inline-block">LOCAL</span>
+                </div>
+              </label>
+              <label class="cursor-pointer">
+                <input type="radio" name="prov" value="groq" class="hidden peer">
+                <div class="border-2 peer-checked:border-brand-500 peer-checked:bg-brand-50 border-gray-200 rounded-xl p-4 text-center transition hover:border-brand-300">
+                  <i data-lucide="zap" class="w-5 h-5 mx-auto mb-1.5 text-gray-400"></i>
+                  <p class="text-sm font-semibold">Groq</p>
+                </div>
+              </label>
+              <label class="cursor-pointer">
+                <input type="radio" name="prov" value="openai" class="hidden peer">
+                <div class="border-2 peer-checked:border-brand-500 peer-checked:bg-brand-50 border-gray-200 rounded-xl p-4 text-center transition hover:border-brand-300">
+                  <i data-lucide="brain" class="w-5 h-5 mx-auto mb-1.5 text-gray-400"></i>
+                  <p class="text-sm font-semibold">OpenAI</p>
+                </div>
+              </label>
+              <label class="cursor-pointer">
+                <input type="radio" name="prov" value="anthropic" class="hidden peer">
+                <div class="border-2 peer-checked:border-brand-500 peer-checked:bg-brand-50 border-gray-200 rounded-xl p-4 text-center transition hover:border-brand-300">
+                  <i data-lucide="bot" class="w-5 h-5 mx-auto mb-1.5 text-gray-400"></i>
+                  <p class="text-sm font-semibold">Anthropic</p>
+                </div>
+              </label>
+            </div>
+          </div>
+
+          <!-- Ollama Panel -->
+          <div id="panel-ollama" class="space-y-4 bg-gray-50 rounded-xl p-5">
+            <p class="text-sm font-bold text-gray-700">Ollama &mdash; Local Configuration</p>
+            <div>
+              <label class="text-xs font-semibold text-gray-500 block mb-1">Ollama Base URL</label>
+              <input id="s-url" type="url" value="http://localhost:11434" class="inp">
+            </div>
+            <div class="flex flex-wrap gap-3 items-center">
+              <button type="button" id="btn-test" onclick="testConn()" class="px-4 py-2 rounded-xl bg-brand-100 text-brand-700 text-sm font-semibold hover:bg-brand-200 transition flex items-center gap-2">
+                <i data-lucide="plug-zap" class="w-4 h-4"></i> Test Connection
+              </button>
+              <span id="conn-res" class="text-sm"></span>
+            </div>
+
+            <!-- Model list from Ollama -->
+            <div>
+              <label class="text-xs font-semibold text-gray-500 block mb-1">Installed Models <span class="text-gray-300">(local only, not cloud)</span></label>
+              <div id="model-cards" class="space-y-2">
+                <p class="text-xs text-gray-400 italic">Test connection to load models.</p>
+              </div>
+              <p id="model-sel-hint" class="text-xs text-gray-400 mt-1"></p>
+            </div>
+
+            <!-- Custom model name (manual entry) -->
+            <div class="border-t border-gray-200 pt-4 space-y-3">
+              <p class="text-xs font-bold text-gray-600">Or enter a model name manually:</p>
+              <div class="flex gap-2">
+                <input id="s-custom-model" type="text" placeholder="e.g. llama3.2, phi3:mini, deepseek-coder" class="flex-1 inp">
+                <button type="button" onclick="setCustomModel()" class="px-4 py-2 rounded-xl bg-brand-100 text-brand-700 text-sm font-semibold hover:bg-brand-200 transition whitespace-nowrap">Use This</button>
+              </div>
+              <p id="custom-model-result" class="text-xs"></p>
+            </div>
+
+            <!-- Pull model -->
+            <div class="border-t border-gray-200 pt-4 space-y-3">
+              <p class="text-xs font-bold text-gray-600">Pull a new model from Ollama registry:</p>
+              <div class="flex gap-2">
+                <input id="s-pull" type="text" placeholder="e.g. llama3.2, mistral, phi3" class="flex-1 inp">
+                <button type="button" onclick="pullModel()" class="px-4 py-2 rounded-xl bg-emerald-100 text-emerald-700 text-sm font-semibold hover:bg-emerald-200 transition flex items-center gap-2 whitespace-nowrap">
+                  <i data-lucide="download" class="w-4 h-4"></i> Pull
+                </button>
+              </div>
+              <p id="pull-res" class="text-xs"></p>
+            </div>
+          </div>
+
+          <!-- External API Panel -->
+          <div id="panel-ext" class="hidden space-y-4 bg-gray-50 rounded-xl p-5">
+            <p class="text-sm font-bold text-gray-700">External API Configuration</p>
+            <div>
+              <label class="text-xs font-semibold text-gray-500 block mb-1">API Key <span class="text-gray-300">(stored in sessionStorage only)</span></label>
+              <input id="s-key" type="password" placeholder="sk-..." class="inp">
+            </div>
+            <div>
+              <label class="text-xs font-semibold text-gray-500 block mb-1">Model Name</label>
+              <input id="s-ext-model" type="text" placeholder="e.g. llama-3.1-8b-instant, gpt-4o-mini, claude-3-haiku" class="inp">
+            </div>
+            <div>
+              <label class="text-xs font-semibold text-gray-500 block mb-1">Custom Endpoint <span class="text-gray-300">(optional)</span></label>
+              <input id="s-ext-url" type="url" placeholder="Leave blank for provider default" class="inp">
+            </div>
+          </div>
+
+          <button type="button" onclick="saveSettings()" class="btn-primary">
+            <i data-lucide="save" class="w-4 h-4"></i> Save Settings
+          </button>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- Status Bar -->
+    <footer class="fixed bottom-0 left-0 lg:left-64 right-0 z-20 bg-white/90 backdrop-blur border-t border-gray-200 px-4 sm:px-6 py-2 flex items-center justify-between text-xs">
+      <div class="flex items-center gap-3">
+        <div class="flex items-center gap-1.5"><span id="ft-dot" class="w-2 h-2 rounded-full bg-gray-300"></span><span id="ft-status" class="text-gray-500">Connecting&hellip;</span></div>
+      </div>
+      <div class="flex items-center gap-3">
+        <span id="ft-model" class="text-brand-600 font-bold truncate max-w-[140px]">&mdash;</span>
+        <button onclick="nav('settings')" class="text-gray-400 hover:text-brand-600 transition flex items-center gap-1"><i data-lucide="settings" class="w-3 h-3"></i></button>
+      </div>
+    </footer>
+  </div>
+</div>
+
+<!-- ══ LOADER OVERLAY ══ -->
+<div id="loader" class="hidden fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center">
+  <div class="bg-white rounded-2xl p-8 text-center shadow-2xl max-w-xs mx-4 modal-enter">
+    <div class="w-12 h-12 border-4 border-gray-100 border-t-brand-600 rounded-full spin mx-auto mb-4"></div>
+    <h3 id="loader-msg" class="font-extrabold text-gray-800 text-lg">Generating&hellip;</h3>
+    <p class="text-sm text-gray-500 mt-1" id="loader-sub">Please wait while AI crafts your proposal.</p>
+    <button id="loader-bg-btn" onclick="runInBg()" class="hidden mt-5 inline-flex items-center gap-1.5 text-xs font-semibold text-brand-600 hover:text-brand-800 bg-brand-50 hover:bg-brand-100 border border-brand-200 px-3 py-1.5 rounded-lg transition">
+      <svg class="w-3.5 h-3.5" viewBox="0 0 16 16" fill="none"><rect x="2" y="2" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.5"/><rect x="9" y="2" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.5"/><rect x="2" y="9" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.5"/><rect x="9" y="9" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.5"/></svg>
+      Run in background
+    </button>
+  </div>
+</div>
+
+<!-- ══ PDF VIEWER MODAL ══ -->
+<div id="pdf-modal" class="hidden fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex flex-col">
+  <div class="flex items-center justify-between bg-gray-900 px-4 sm:px-6 py-3 shrink-0">
+    <div class="flex items-center gap-3">
+      <div class="w-7 h-7 rounded bg-red-600 flex items-center justify-center"><i data-lucide="file-text" class="w-4 h-4 text-white"></i></div>
+      <span id="pdf-modal-title" class="text-white font-semibold text-sm truncate max-w-[200px] sm:max-w-md">Proposal.pdf</span>
+    </div>
+    <div class="flex items-center gap-2">
+      <a id="pdf-dl-btn" href="#" download class="flex items-center gap-1.5 text-xs font-semibold text-white bg-brand-600 hover:bg-brand-700 px-3 py-1.5 rounded-lg transition">
+        <i data-lucide="download" class="w-3.5 h-3.5"></i> Download
+      </a>
+      <button onclick="closePDFModal()" class="p-2 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition">
+        <i data-lucide="x" class="w-5 h-5"></i>
+      </button>
+    </div>
+  </div>
+  <iframe id="pdf-frame" src="about:blank" class="flex-1 w-full border-0" allow="fullscreen"></iframe>
+</div>
+
+<!-- ══ TOAST BOX ══ -->
+<!-- ══ BACKGROUND JOB TRAY ══ -->
+<div id="bg-job-tray" class="fixed bottom-28 right-4 z-50 space-y-2 w-72"></div>
+<div id="toasts" class="fixed bottom-16 right-4 z-50 space-y-2 max-w-sm"></div>
+
+<!-- ══ TAILWIND SHORTHAND STYLES ══ -->
+<style>
+  .label  { display:block; font-size:.75rem; font-weight:600; color:#6b7280; margin-bottom:.25rem; }
+  .inp    { width:100%; border:1px solid #e5e7eb; border-radius:.75rem; padding:.6rem .85rem; font-size:.875rem; outline:none; transition:box-shadow .15s, border-color .15s; }
+  .inp:focus { border-color:#a78bfa; box-shadow:0 0 0 3px rgba(167,139,250,.25); }
+  .btn-primary { display:inline-flex; align-items:center; gap:.5rem; background:#7c3aed; color:#fff; font-size:.8rem; font-weight:700; padding:.55rem 1.25rem; border-radius:9999px; border:none; cursor:pointer; transition:background .15s; box-shadow:0 1px 6px rgba(124,58,237,.35); }
+  .btn-primary:hover { background:#6d28d9; }
+  .btn-outline { display:inline-flex; align-items:center; gap:.5rem; background:transparent; color:#4b5563; font-size:.8rem; font-weight:600; padding:.55rem 1.25rem; border-radius:9999px; border:1px solid #d1d5db; cursor:pointer; transition:all .15s; }
+  .btn-outline:hover { border-color:#a78bfa; color:#7c3aed; }
+  .model-card { border:2px solid #e5e7eb; border-radius:.875rem; padding:.75rem 1rem; cursor:pointer; transition:all .15s; display:flex; align-items:center; gap:.75rem; }
+  .model-card:hover { border-color:#c4b5fd; background:#faf5ff; }
+  .model-card.selected { border-color:#7c3aed; background:#f5f3ff; }
+</style>
+
+<script>
+/* ═══════════════════════════════════════════════════════════
+   STATE
+═══════════════════════════════════════════════════════════ */
+const API = location.origin;
+
+/* Simple TTL cache for expensive remote calls */
+var _cache = {};
+function getCache(key) {
+  var e = _cache[key];
+  if (e && Date.now() - e.ts < 30000) return e.val;
+  return null;
+}
+function setCache(key, val) { _cache[key] = { val: val, ts: Date.now() }; }
+
+/* Validate that a URL uses http/https only (basic SSRF guard) */
+function safeUrl(input) {
+  try {
+    var u = new URL(input);
+    if (u.protocol !== 'http:' && u.protocol !== 'https:') throw new Error('Invalid protocol');
+    return u.toString();
+  } catch (e) { return null; }
+}
+
+/* Persistent config (non-sensitive) */
+let cfg = {
+  provider: 'ollama', api_url: 'http://localhost:11434',
+  model: '', ext_model: '', ext_url: '',
+  device_id: ''
+};
+
+/* ═══════════════════════════════════════════════════════════
+   HELPERS
+═══════════════════════════════════════════════════════════ */
+const $ = id => document.getElementById(id);
+const inr = n => '\u20B9 ' + Number(n).toLocaleString('en-IN', { maximumFractionDigits: 0 });
+
+function toast(msg, type) {
+  type = type || 'info';
+  var el = document.createElement('div');
+  var cls = { success: 'border-emerald-500 text-emerald-800', error: 'border-red-500 text-red-800', info: 'border-brand-500 text-brand-800' };
+  el.className = 'slide-in bg-white border-l-4 ' + (cls[type] || cls.info) + ' rounded-xl shadow-lg px-4 py-3 text-sm font-medium';
+  el.textContent = msg;
+  $('toasts').appendChild(el);
+  setTimeout(function() { el.style.opacity = '0'; el.style.transition = 'opacity .3s'; setTimeout(function() { el.remove(); }, 300); }, 3800);
+}
+
+function loader(show, msg, sub, allowBg) {
+  $('loader-msg').textContent = msg || 'Generating\u2026';
+  $('loader-sub').textContent = sub || 'Please wait while AI crafts your proposal.';
+  $('loader').classList.toggle('hidden', !show);
+  $('loader-bg-btn').classList.toggle('hidden', !(show && allowBg));
+  if (!show) _bgMode = false;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   BACKGROUND JOB SYSTEM
+═══════════════════════════════════════════════════════════ */
+var _bgMode = false;
+var _bgJobId = null;
+var _bgJobs = {};
+var _bgSeq = 0;
+
+function runInBg() {
+  _bgMode = true;
+  var title = ($('f-title') && $('f-title').value ? $('f-title').value : 'Proposal').slice(0, 50);
+  _bgJobId = _bgAdd(title);
+  loader(false);
+  toast('Running in background — check the tray ↘', 'info');
+}
+
+function _bgAdd(title) {
+  var id = ++_bgSeq;
+  _bgJobs[id] = { title: title, status: 'running' };
+  _bgRender();
+  return id;
+}
+
+function _bgDone(id, blobUrl, dlName, viewTitle) {
+  if (!_bgJobs[id]) return;
+  _bgJobs[id].status = 'done';
+  _bgJobs[id].blobUrl = blobUrl;
+  _bgJobs[id].dlName = dlName;
+  _bgJobs[id].viewTitle = viewTitle;
+  _bgRender();
+  toast('\u2713 PDF ready: ' + _bgJobs[id].title.slice(0, 35), 'success');
+}
+
+function _bgFail(id, msg) {
+  if (!_bgJobs[id]) return;
+  _bgJobs[id].status = 'error';
+  _bgJobs[id].error = msg;
+  _bgRender();
+  toast('\u2717 PDF failed: ' + msg.slice(0, 50), 'error');
+}
+
+function _bgDismiss(id) {
+  delete _bgJobs[id];
+  _bgRender();
+}
+
+function _bgRender() {
+  var tray = $('bg-job-tray');
+  var entries = Object.entries(_bgJobs);
+  if (!entries.length) { tray.innerHTML = ''; return; }
+  tray.innerHTML = entries.map(function(kv) {
+    var id = kv[0], j = kv[1];
+    var dot, label, actions;
+    if (j.status === 'running') {
+      dot = '<div class="w-4 h-4 border-2 border-gray-200 border-t-brand-600 rounded-full spin shrink-0 mt-0.5"></div>';
+      label = '<span class="text-xs text-gray-500">Generating PDF\u2026</span>';
+      actions = '';
+    } else if (j.status === 'done') {
+      dot = '<div class="w-4 h-4 rounded-full bg-emerald-500 flex items-center justify-center shrink-0 mt-0.5"><svg viewBox="0 0 12 12" fill="none" class="w-2.5 h-2.5"><path d="M2 6l3 3 5-5" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>';
+      label = '<span class="text-xs text-emerald-700 font-medium">Ready!</span>';
+      var safeTitle = j.viewTitle.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+      actions = '<div class="flex gap-3 mt-2">'
+        + '<button onclick="openPDF(\'' + j.blobUrl + '\',\'' + safeTitle + '\')" class="text-xs font-semibold text-brand-600 hover:underline">View PDF</button>'
+        + '<a href="' + j.blobUrl + '" download="' + j.dlName + '" class="text-xs font-semibold text-gray-500 hover:underline">Download</a>'
+        + '</div>';
+    } else {
+      dot = '<div class="w-4 h-4 rounded-full bg-red-500 flex items-center justify-center shrink-0 mt-0.5"><svg viewBox="0 0 12 12" fill="none" class="w-2.5 h-2.5"><path d="M3 3l6 6M9 3l-6 6" stroke="white" stroke-width="1.5" stroke-linecap="round"/></svg></div>';
+      label = '<span class="text-xs text-red-600 font-medium">Failed</span>';
+      actions = '<p class="text-xs text-red-500 mt-1 truncate" title="' + (j.error || '') + '">' + (j.error || 'Unknown error').slice(0,55) + '</p>';
+    }
+    return '<div class="slide-in bg-white border border-gray-200 rounded-xl shadow-lg px-3 py-2.5">'
+      + '<div class="flex items-start gap-2">'
+      + dot
+      + '<div class="flex-1 min-w-0">'
+      + '<p class="text-xs font-semibold text-gray-800 truncate" title="' + j.title + '">' + j.title + '</p>'
+      + label
+      + actions
+      + '</div>'
+      + '<button onclick="_bgDismiss(' + id + ')" class="text-gray-300 hover:text-gray-600 ml-1 shrink-0 text-base leading-none transition" title="Dismiss">&times;</button>'
+      + '</div>'
+      + '</div>';
+  }).join('');
+}
+
+/* ═══════════════════════════════════════════════════════════
+   DEVICE ID — generates once, persists forever in localStorage
+═══════════════════════════════════════════════════════════ */
+function ensureDeviceId() {
+  var stored = localStorage.getItem('pai_device_id');
+  if (!stored || stored.length < 10) {
+    /* Generate a stable UUID-like device identifier */
+    stored = 'dev-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10) + '-' + Math.random().toString(36).slice(2, 10);
+    localStorage.setItem('pai_device_id', stored);
+  }
+  cfg.device_id = stored;
+  $('sb-device').textContent = 'Device: ' + stored.slice(0, 22) + '\u2026';
+}
+
+async function registerDevice() {
+  if (!cfg.device_id) return;
+  try {
+    await fetch(API + '/session/register?device_id=' + encodeURIComponent(cfg.device_id), { method: 'POST' });
+  } catch (e) { /* non-fatal */ }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   CONFIG PERSISTENCE
+   API keys go to sessionStorage (cleared on tab close) only.
+   Everything else goes to localStorage.
+═══════════════════════════════════════════════════════════ */
+function loadCfg() {
+  try {
+    var s = localStorage.getItem('pai_cfg');
+    if (s) cfg = Object.assign(cfg, JSON.parse(s));
+    var k = sessionStorage.getItem('pai_api_key');
+    if (k) cfg.api_key = k;
+  } catch (e) {}
+}
+
+function saveCfgStore() {
+  /* Never persist API keys in localStorage */
+  if (cfg.api_key) sessionStorage.setItem('pai_api_key', cfg.api_key);
+  else sessionStorage.removeItem('pai_api_key');
+  var safe = Object.assign({}, cfg);
+  delete safe.api_key;
+  localStorage.setItem('pai_cfg', JSON.stringify(safe));
+}
+
+/* ═══════════════════════════════════════════════════════════
+   NAVIGATION
+═══════════════════════════════════════════════════════════ */
+function nav(id) {
+  document.querySelectorAll('.view').forEach(function(v) { v.classList.add('hidden'); });
+  $('view-' + id).classList.remove('hidden');
+  document.querySelectorAll('.nav-btn').forEach(function(b) {
+    var a = b.dataset.nav === id;
+    b.classList.toggle('bg-brand-100', a);
+    b.classList.toggle('text-brand-700', a);
+    b.classList.toggle('font-bold', a);
+    b.classList.toggle('text-gray-600', !a);
+  });
+  closeSidebar();
+  if (id === 'dashboard' || id === 'history') loadHistory();
+  if (id === 'settings') initSettingsUI();
+  if (id === 'generate') refreshGenModels();
+}
+
+function openSidebar() { $('sidebar').classList.remove('-translate-x-full'); $('sb-overlay').classList.remove('hidden'); }
+function closeSidebar() { $('sidebar').classList.add('-translate-x-full'); $('sb-overlay').classList.add('hidden'); }
+
+/* ═══════════════════════════════════════════════════════════
+   SETTINGS UI
+═══════════════════════════════════════════════════════════ */
+function initSettingsUI() {
+  var r = document.querySelector('input[name="prov"][value="' + cfg.provider + '"]');
+  if (r) r.checked = true;
+  toggleProvPanel(cfg.provider);
+  $('s-url').value = cfg.api_url || 'http://localhost:11434';
+  $('s-key').value = cfg.api_key || '';
+  $('s-ext-model').value = cfg.ext_model || '';
+  $('s-ext-url').value = cfg.ext_url || '';
+}
+
+function toggleProvPanel(p) {
+  $('panel-ollama').classList.toggle('hidden', p !== 'ollama');
+  $('panel-ext').classList.toggle('hidden', p === 'ollama');
+}
+
+document.querySelectorAll('input[name="prov"]').forEach(function(r) {
+  r.addEventListener('change', function(e) { toggleProvPanel(e.target.value); });
+});
+
+function saveSettings() {
+  var prov = document.querySelector('input[name="prov"]:checked').value;
+  cfg.provider = prov;
+  if (prov === 'ollama') {
+    cfg.api_url = $('s-url').value;
+    /* model set via card selection or custom input */
+  } else {
+    cfg.api_key = $('s-key').value;
+    cfg.ext_model = $('s-ext-model').value;
+    cfg.ext_url = $('s-ext-url').value;
+  }
+  saveCfgStore();
+  updateStatusBar();
+  refreshGenModels();
+  toast('Settings saved!', 'success');
+}
+
+/* ═══════════════════════════════════════════════════════════
+   OLLAMA CONNECTION & MODEL CARDS
+═══════════════════════════════════════════════════════════ */
+async function testConn() {
+  var btn = $('btn-test');
+  var res = $('conn-res');
+  var rawUrl = $('s-url').value;
+  var url = safeUrl(rawUrl);
+  if (!url) { res.textContent = '✗ Invalid URL (must be http/https)'; res.className = 'text-sm text-red-600'; return; }
+  btn.disabled = true;
+  res.textContent = 'Testing\u2026';
+  res.className = 'text-sm text-gray-500';
+  try {
+    var r = await fetch(API + '/ollama-status?url=' + encodeURIComponent(url));
+    var d = await r.json();    setCache('ollama-models-' + url, d);    if (d.connected) {
+      res.textContent = '\u2713 Connected — ' + d.model_count + ' local model(s) | ' + d.total_models_including_cloud + ' total (cloud excluded)';
+      res.className = 'text-sm text-emerald-600 font-semibold';
+      renderModelCards(d.models);
+    } else {
+      res.textContent = '\u2717 ' + (d.error || 'Unreachable');
+      res.className = 'text-sm text-red-600 font-semibold';
+    }
+  } catch (e) {
+    res.textContent = '\u2717 ' + e.message;
+    res.className = 'text-sm text-red-600';
+  }
+  btn.disabled = false;
+}
+
+function renderModelCards(models) {
+  var box = $('model-cards');
+  if (!models || !models.length) {
+    box.innerHTML = '<p class="text-xs text-amber-600 font-semibold">No models found. Pull one below (e.g. llama3.2).</p>';
+    $('model-sel-hint').textContent = '';
+    return;
+  }
+  box.innerHTML = models.map(function(m) {
+    var sel = m.name === cfg.model ? ' selected' : '';
+    var size = m.size_gb > 0 ? m.size_gb + ' GB' : '';
+    var fam = [m.family, m.parameter_size, m.quantization].filter(Boolean).join(' · ');
+    var badge = m.is_cloud
+      ? '<span class="text-[9px] bg-blue-100 text-blue-700 font-bold px-2 py-0.5 rounded-full whitespace-nowrap">CLOUD</span>'
+      : '<span class="text-[9px] bg-emerald-100 text-emerald-700 font-bold px-2 py-0.5 rounded-full whitespace-nowrap">LOCAL</span>';
+    var activeBadge = m.name === cfg.model ? '<span class="text-[10px] bg-brand-600 text-white font-bold px-2 py-0.5 rounded-full">Active</span>' : '';
+    return '<div class="model-card' + sel + '" onclick="selectModel(\'' + m.name.replace(/'/g, "\\'") + '\', this)">' +
+      '<div class="w-9 h-9 rounded-xl bg-brand-100 text-brand-600 flex items-center justify-center shrink-0"><i data-lucide="cpu" class="w-4 h-4"></i></div>' +
+      '<div class="flex-1 min-w-0">' +
+        '<p class="text-sm font-bold truncate">' + m.name + '</p>' +
+        '<p class="text-xs text-gray-400">' + [fam, size].filter(Boolean).join(' | ') + '</p>' +
+      '</div>' +
+      '<div class="flex items-center gap-1">' + badge + activeBadge + '</div>' +
+    '</div>';
+  }).join('');
+  $('model-sel-hint').textContent = models.length + ' model(s). Click to select.';
+  lucide.createIcons();
+}
+
+function selectModel(name, el) {
+  cfg.model = name;
+  document.querySelectorAll('.model-card').forEach(function(c) { c.classList.remove('selected'); });
+  el.classList.add('selected');
+  $('model-sel-hint').textContent = 'Selected: ' + name;
+  updateStatusBar();
+  refreshGenModels();
+  toast('Model set to: ' + name, 'success');
+}
+
+function setCustomModel() {
+  var v = $('s-custom-model').value.trim();
+  if (!v) { toast('Enter a model name', 'error'); return; }
+  cfg.model = v;
+  $('custom-model-result').textContent = '\u2713 Model set to "' + v + '"';
+  $('custom-model-result').className = 'text-xs text-emerald-600 font-semibold';
+  updateStatusBar();
+  refreshGenModels();
+  toast('Custom model set: ' + v, 'success');
+}
+
+async function pullModel() {
+  var name = $('s-pull').value.trim();
+  if (!name) { toast('Enter a model name', 'error'); return; }
+  var res = $('pull-res');
+  res.textContent = 'Pulling "' + name + '" — may take several minutes for large models\u2026';
+  res.className = 'text-xs text-amber-600';
+  loader(true, 'Pulling ' + name, 'Downloading model weights. Large models take several minutes.');
+  try {
+    var url = safeUrl($('s-url').value);
+    if (!url) { res.textContent = '\u2717 Invalid Ollama URL (must be http/https)'; res.className = 'text-xs text-red-600'; loader(false); return; }
+    var ctrl = new AbortController();
+    var t = setTimeout(function() { ctrl.abort(); }, 600000);
+    var r = await fetch(API + '/ollama-pull?model_name=' + encodeURIComponent(name) + '&url=' + encodeURIComponent(url), { method: 'POST', signal: ctrl.signal });
+    clearTimeout(t);
+    var d = await r.json();
+    if (d.success) {
+      res.textContent = '\u2713 ' + d.message;
+      res.className = 'text-xs text-emerald-600 font-semibold';
+      toast('Model "' + name + '" pulled successfully!', 'success');
+      await testConn(); /* refresh model list */
+    } else {
+      res.textContent = '\u2717 ' + d.error;
+      res.className = 'text-xs text-red-600';
+      toast(d.error, 'error');
+    }
+  } catch (e) {
+    res.textContent = '\u2717 ' + (e.name === 'AbortError' ? 'Timed out. Try: ollama pull ' + name : e.message);
+    res.className = 'text-xs text-red-600';
+    toast(e.message, 'error');
+  }
+  loader(false);
+}
+
+/* Generate page model selector (uses 30s cache to avoid repeated calls) */
+async function refreshGenModels() {
+  var sel = $('gen-model-sel');
+  if (!sel) return;
+  try {
+    if (cfg.provider !== 'ollama') {
+      sel.innerHTML = '<option value="' + (cfg.ext_model || '') + '">' + (cfg.ext_model || 'Default model') + '</option>';
+      return;
+    }
+    var baseUrl = safeUrl(cfg.api_url || 'http://localhost:11434');
+    if (!baseUrl) { sel.innerHTML = '<option value="">Invalid Ollama URL</option>'; return; }
+    var cacheKey = 'ollama-models-' + baseUrl;
+    var cached = getCache(cacheKey);
+    var d = cached;
+    if (!d) {
+      var r = await fetch(API + '/ollama-status?url=' + encodeURIComponent(baseUrl));
+      d = await r.json();
+      setCache(cacheKey, d);
+    }
+    if (d.connected && d.models && d.models.length) {
+      sel.innerHTML = d.models.map(function(m) {
+        var sz = m.size_gb > 0 ? ' (' + m.size_gb + ' GB)' : '';
+        return '<option value="' + m.name + '"' + (m.name === cfg.model ? ' selected' : '') + '>' + m.name + sz + '</option>';
+      }).join('');
+      /* Also add custom option at bottom */
+      sel.innerHTML += '<option value="__custom__">+ Custom model name\u2026</option>';
+      if (!cfg.model && d.models.length) cfg.model = d.models[0].name;
+    } else {
+      sel.innerHTML = '<option value="">Ollama not connected</option>';
+    }
+  } catch (e) {
+    sel.innerHTML = '<option value="">Could not load models</option>';
+  }
+  updateStatusBar();
+}
+
+function onGenModelChange(val) {
+  if (val === '__custom__') {
+    var custom = prompt('Enter model name (e.g. llama3.2:latest):');
+    if (custom) {
+      cfg.model = custom.trim();
+      var sel = $('gen-model-sel');
+      var opt = document.createElement('option');
+      opt.value = cfg.model; opt.textContent = cfg.model; opt.selected = true;
+      sel.insertBefore(opt, sel.lastChild);
+      sel.value = cfg.model;
+      toast('Model set to: ' + cfg.model, 'success');
+      updateStatusBar();
+    }
+  } else if (val) {
+    cfg.model = val;
+    updateStatusBar();
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   STATUS BAR
+═══════════════════════════════════════════════════════════ */
+async function updateStatusBar() {
+  var names = { ollama: 'Ollama (Local)', groq: 'Groq', openai: 'OpenAI', anthropic: 'Anthropic' };
+  var pn = names[cfg.provider] || cfg.provider;
+  var mn = cfg.provider === 'ollama' ? (cfg.model || 'Auto') : (cfg.ext_model || 'Default');
+
+  $('sb-prov').textContent = pn;
+  $('sb-model').textContent = mn;
+  $('d-prov').textContent = pn;
+  $('d-model').textContent = mn;
+  $('ft-model').textContent = mn;
+
+  try {
+    var r = await fetch(API + '/health');
+    if (!r.ok) throw 0;
+    $('sb-dot').className = 'w-2 h-2 rounded-full bg-emerald-500';
+    $('ft-dot').className = 'w-2 h-2 rounded-full bg-emerald-500';
+    $('ft-status').textContent = 'Connected';
+    $('d-status').textContent = 'Connected';
+    $('d-status').className = 'text-base font-bold text-emerald-600';
+  } catch (e) {
+    $('sb-dot').className = 'w-2 h-2 rounded-full bg-red-500';
+    $('ft-dot').className = 'w-2 h-2 rounded-full bg-red-500';
+    $('ft-status').textContent = 'Offline';
+    $('d-status').textContent = 'Offline';
+    $('d-status').className = 'text-base font-bold text-red-600';
+    toast('Backend appears offline', 'error');
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   HISTORY (device-based via SQLite)
+═══════════════════════════════════════════════════════════ */
+async function loadHistory() {
+  try {
+    /* Primary: load from device session (SQLite) */
+    var r = await fetch(API + '/session/' + encodeURIComponent(cfg.device_id) + '/proposals');
+    if (!r.ok) throw new Error('session 404');
+    var d = await r.json();
+    $('d-total').textContent = d.proposals.length;
+    renderList(d.proposals, 'd-recent', 5);
+    renderList(d.proposals, 'hist-list', 999);
+  } catch (e) {
+    /* Fallback: load from file system listing */
+    try {
+      var r2 = await fetch(API + '/proposals');
+      var d2 = await r2.json();
+      $('d-total').textContent = d2.proposals.length;
+      renderList(d2.proposals.map(function(p) {
+        return Object.assign(p, { project_title: p.filename, view_url: p.download_url + '?inline=true' });
+      }), 'd-recent', 5);
+      renderList(d2.proposals.map(function(p) {
+        return Object.assign(p, { project_title: p.filename, view_url: p.download_url + '?inline=true' });
+      }), 'hist-list', 999);
+    } catch (e2) { console.warn('History load failed', e2); }
+  }
+}
+
+function renderList(items, containerId, limit) {
+  var el = $(containerId);
+  if (!el) return;
+  if (!items || !items.length) {
+    el.innerHTML = '<p class="text-gray-400 text-sm text-center py-14">No proposals yet for this device.</p>';
+    return;
+  }
+  el.innerHTML = items.slice(0, limit).map(function(p) {
+    var ts = p.created_at ? new Date(p.created_at).toLocaleString('en-IN') : '';
+    var title = p.project_title || p.filename || 'Proposal';
+    var industry = p.industry ? '<span class="bg-brand-50 text-brand-700 px-1.5 py-0.5 rounded text-[10px] font-semibold">' + p.industry + '</span>' : '';
+    var provider = p.provider ? '<span class="bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded text-[10px]">' + p.provider + (p.model ? ':' + p.model.split(':')[0] : '') + '</span>' : '';
+    return '<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-4 sm:px-5 py-4 border-b border-gray-100 last:border-0 hover:bg-gray-50 transition-colors">' +
+      '<div class="flex items-center gap-3 min-w-0">' +
+        '<div class="w-10 h-10 rounded-xl bg-red-50 text-red-500 flex items-center justify-center shrink-0"><i data-lucide="file-text" class="w-5 h-5"></i></div>' +
+        '<div class="min-w-0">' +
+          '<p class="text-sm font-bold truncate max-w-[200px] sm:max-w-none">' + title + '</p>' +
+          '<div class="flex flex-wrap items-center gap-1.5 mt-1">' + industry + provider + '<span class="text-[11px] text-gray-400">' + ts + '</span>' + (p.size_kb ? '<span class="text-[11px] text-gray-400">' + p.size_kb + ' KB</span>' : '') + '</div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="flex flex-wrap items-center gap-2 self-start sm:self-center shrink-0">' +
+        (p.view_url || p.download_url ?
+          '<button onclick="openPDF(\'' + (p.view_url || p.download_url + '?inline=true') + '\', \'' + title.replace(/'/g, "\\'") + '\')" class="flex items-center gap-1.5 text-xs font-semibold text-gray-600 border border-gray-200 rounded-lg px-3 py-1.5 hover:bg-brand-50 hover:text-brand-600 hover:border-brand-300 transition">' +
+            '<i data-lucide="eye" class="w-3.5 h-3.5"></i> View' +
+          '</button>' : '') +
+        (p.download_url || p.view_url ?
+          '<a href="' + (p.download_url || p.view_url) + '" download class="flex items-center gap-1.5 text-xs font-semibold text-gray-600 border border-gray-200 rounded-lg px-3 py-1.5 hover:bg-emerald-50 hover:text-emerald-600 hover:border-emerald-300 transition">' +
+            '<i data-lucide="download" class="w-3.5 h-3.5"></i> Download' +
+          '</a>' : '') +
+      '</div>' +
+    '</div>';
+  }).join('');
+  lucide.createIcons();
+}
+
+/* ═══════════════════════════════════════════════════════════
+   PDF VIEWER MODAL
+═══════════════════════════════════════════════════════════ */
+function openPDF(url, title) {
+  $('pdf-modal-title').textContent = title || 'Proposal';
+  $('pdf-dl-btn').href = url.replace('?inline=true', '');
+  $('pdf-dl-btn').download = (title || 'Proposal') + '.pdf';
+
+  /* Build inline URL: use the ?inline=true approach */
+  var viewUrl = url.includes('?') ? url : url + '?inline=true';
+  $('pdf-frame').src = viewUrl;
+
+  $('pdf-modal').classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
+}
+
+function closePDFModal() {
+  $('pdf-modal').classList.add('hidden');
+  $('pdf-frame').src = 'about:blank';
+  document.body.style.overflow = '';
+}
+
+/* Close on Escape */
+document.addEventListener('keydown', function(e) { if (e.key === 'Escape') closePDFModal(); });
+
+/* ═══════════════════════════════════════════════════════════
+   COST ESTIMATOR
+═══════════════════════════════════════════════════════════ */
+function estimateCost() {
+  var months = parseInt($('f-months').value) || 1;
+  var users  = parseInt($('f-users').value)  || 100;
+  if (months < 1 || users < 1) { $('cost-box').classList.add('hidden'); return; }
+  var dev  = 150000 * months;
+  var pu   = users <= 1000 ? 42 : users <= 10000 ? 29 : 17;
+  var infra = pu * users;
+  var cont  = dev * 0.1;
+  $('c-dev').textContent   = inr(dev);
+  $('c-infra').textContent = inr(infra);
+  $('c-cont').textContent  = inr(cont);
+  $('c-total').textContent = inr(dev + infra + cont);
+  $('cost-box').classList.remove('hidden');
+}
+
+/* Live update cost when visible; called by oninput on months/users fields */
+function liveUpdateCost() {
+  if (!$('cost-box').classList.contains('hidden')) estimateCost();
+}
+
+/* ═══════════════════════════════════════════════════════════
+   FORM PAYLOAD
+═══════════════════════════════════════════════════════════ */
+function payload() {
+  return {
+    project_title:   $('f-title').value,
+    client_name:     $('f-client').value || '',
+    industry:        $('f-industry').value,
+    duration_months: parseInt($('f-months').value) || 6,
+    expected_users:  parseInt($('f-users').value)  || 100,
+    tech_stack:      $('f-stack').value.split(',').map(function(s) { return s.trim(); }).filter(Boolean),
+    custom_notes:    ($('f-notes').value || '').trim() || null,
+    provider:        cfg.provider,
+    model:           cfg.provider === 'ollama' ? (cfg.model || null) : (cfg.ext_model || null),
+    api_key:         cfg.api_key  || null,
+    api_url:         cfg.provider === 'ollama' ? (cfg.api_url || null) : (cfg.ext_url || null),
+    device_id:       cfg.device_id || null
+  };
+}
+
+/* ═══════════════════════════════════════════════════════════
+   JSON PREVIEW
+═══════════════════════════════════════════════════════════ */
+async function genJSON() {
+  var form = $('prop-form');
+  if (!form.checkValidity()) { form.reportValidity(); return; }
+  loader(true, 'Generating draft\u2026', 'AI is building your proposal structure.');
+  try {
+    var r = await fetch(API + '/generate-proposal', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload())
+    });
+    if (!r.ok) { var e = await r.text(); throw new Error(e); }
+    var d = await r.json();
+    $('prev-empty').classList.add('hidden');
+    $('prev-json').classList.remove('hidden');
+    $('prev-json').textContent = JSON.stringify(d, null, 2);
+    toast('Draft generated!', 'success');
+  } catch (e) { toast(e.message || 'Generation failed', 'error'); }
+  loader(false);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   PDF GENERATION
+═══════════════════════════════════════════════════════════ */
+$('prop-form').addEventListener('submit', async function(e) {
+  e.preventDefault();
+  _bgMode = false;
+  _bgJobId = null;
+  loader(true, 'Generating PDF\u2026', 'This may take 20-60 seconds depending on the model.', true);
+  var p = payload();
+  var jobTitle = (p.project_title || 'Proposal').slice(0, 60);
+  try {
+    var r = await fetch(API + '/download-proposal-pdf', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(p)
+    });
+    if (!r.ok) { var txt = await r.text(); throw new Error(txt); }
+    var blob = await r.blob();
+    var blobUrl = URL.createObjectURL(blob);
+    var dlName = jobTitle.replace(/[ /\\]/g, '_') + '_Proposal.pdf';
+
+    if (_bgMode && _bgJobId !== null) {
+      /* Background mode — update tray notification */
+      _bgDone(_bgJobId, blobUrl, dlName, jobTitle + ' — Proposal');
+      await loadHistory();
+    } else {
+      /* Normal mode — dismiss overlay, auto-download + open viewer */
+      loader(false);
+      var a = document.createElement('a');
+      a.href = blobUrl;
+      a.download = dlName;
+      document.body.appendChild(a); a.click(); a.remove();
+      openPDF(blobUrl, jobTitle + ' — Proposal');
+      toast('PDF generated and downloaded!', 'success');
+      await loadHistory();
+      nav('history');
+    }
+  } catch (err) {
+    if (_bgMode && _bgJobId !== null) {
+      _bgFail(_bgJobId, err.message || 'PDF generation failed');
+    } else {
+      loader(false);
+      toast(err.message || 'PDF generation failed', 'error');
+    }
+  }
+});
+
+/* Unified openPDF — handles both blob: and API endpoint URLs */
+openPDF = function(url, title) {
+  $('pdf-modal-title').textContent = title || 'Proposal';
+  if (url && url.startsWith('blob:')) {
+    /* Blob URL from just-generated PDF: view & download directly */
+    $('pdf-dl-btn').href = url;
+    $('pdf-dl-btn').setAttribute('download', (title || 'Proposal').replace(/[^a-zA-Z0-9 _-]/g, '') + '.pdf');
+    $('pdf-frame').src = url;
+  } else if (url) {
+    /* Backend URL: append ?inline=true for the iframe, plain URL for download */
+    var cleanUrl = url.split('?')[0];
+    var viewUrl = cleanUrl + '?inline=true';
+    $('pdf-dl-btn').href = cleanUrl;
+    $('pdf-dl-btn').removeAttribute('download');
+    $('pdf-frame').src = viewUrl;
+  }
+  $('pdf-modal').classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
+};
+
+/* ═══════════════════════════════════════════════════════════
+   MAGIC FILL
+═══════════════════════════════════════════════════════════ */
+function magicFill() {
+  var txt = $('magic-input').value.trim();
+  if (!txt) { toast('Enter a description first', 'error'); return; }
+
+  /* Title: extract after verb, or fall back to title-casing the whole query */
+  var titleM = txt.match(/(?:build|create|develop|design|make|launch|deploy)\s+(?:a\s+|an\s+)?(.+?)(?:\s+for\s+|\s+using\s+|\s+with\s+|,|$)/i);
+  var title = titleM
+    ? titleM[1].trim().replace(/\b\w/g, function(c) { return c.toUpperCase(); }).slice(0, 120)
+    : txt.replace(/\s+(?:in|using|with|on|for)\s+.*/i, '').trim()  /* drop stack/context suffix */
+        .replace(/\b\w/g, function(c) { return c.toUpperCase(); }).slice(0, 120);
+
+  var monM  = txt.match(/(\d+)\s*months?/i);
+  var usrM  = txt.match(/(\d[\d,]*)\s*(?:k\s+)?users?/i);
+  var indM  = txt.match(/(healthcare|health|diabet|diabetic|pharma|medic|finance|fintech|banking|ecommerce|e-commerce|retail|education|manufacturing|logistics|saas|cloud|real\s*estate|insurance|telecom)/i);
+  var techM = txt.match(/(?:using|with|built\s+on|in)\s+((?:[A-Za-z0-9.#+\-]+(?:\s*,\s*|\s*&\s*|\s+and\s+)?)+)/i);
+
+  var months = monM ? Math.min(60, parseInt(monM[1])) : 6;
+  var users  = usrM ? parseInt(usrM[1].replace(/,/g, '')) * (txt.match(/\d+\s*k\s/i) ? 1000 : 1) : 500;
+  /* Infer industry from keywords — healthcare/diabet* → Healthcare */
+  var ind = indM ? indM[1].charAt(0).toUpperCase() + indM[1].slice(1).toLowerCase() : 'Technology';
+  if (/diabet/i.test(ind)) ind = 'Healthcare';
+  if (/medic|pharma/i.test(ind)) ind = 'Healthcare';
+  var techRaw = '';
+  if (techM) {
+    techRaw = techM[1].split(/\s*[,&]\s*|\s+and\s+/i)
+      .map(function(t) { return t.trim(); })
+      .filter(function(t) { return t.length > 0 && t.length < 30 && /^[A-Za-z0-9.#+\- ]+$/.test(t); })
+      .join(', ');
+  }
+
+  nav('generate');
+  $('f-title').value    = title;
+  $('f-industry').value = ind;
+  $('f-months').value   = months;
+  $('f-users').value    = users;
+  $('f-stack').value    = techRaw || 'Python, React, AWS';
+  /* Do NOT auto-show cost estimate — user must click “Estimate Cost” */
+  $('cost-box').classList.add('hidden');
+  toast('Form filled from your description — review and adjust as needed.', 'info');
+}
+
+/* ═══════════════════════════════════════════════════════════
+   INIT
+═══════════════════════════════════════════════════════════ */
+async function init() {
+  loadCfg();
+  ensureDeviceId();
+  lucide.createIcons();
+  nav('dashboard');
+  /* Run independent start-up tasks in parallel */
+  await Promise.all([ registerDevice(), updateStatusBar(), loadHistory() ]);
+  /* Auto-load Ollama model list (non-blocking) */
+  if (cfg.provider === 'ollama') {
+    var baseUrl = safeUrl(cfg.api_url || 'http://localhost:11434');
+    if (baseUrl) {
+      fetch(API + '/ollama-status?url=' + encodeURIComponent(baseUrl)).then(function(r) {
+        return r.json();
+      }).then(function(d) {
+        if (d.connected && d.models && d.models.length) {
+          setCache('ollama-models-' + baseUrl, d);
+          if (!cfg.model) { cfg.model = d.models[0].name; saveCfgStore(); updateStatusBar(); }
+        }
+      }).catch(function() {});
+    }
+  }
+}
+
+init();
+</script>
+</body>
 </html>

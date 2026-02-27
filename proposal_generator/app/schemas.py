@@ -47,6 +47,22 @@ class ProposalRequest(BaseModel):
         None, description="Custom API URL / endpoint"
     )
 
+    # ---- Custom project details ----
+    custom_notes: Optional[str] = Field(
+        None, max_length=2000,
+        description="Additional custom requirements, constraints, or details provided by the user",
+    )
+
+    # ---- Session tracking ----
+    device_id: Optional[str] = Field(
+        None, max_length=128,
+        description="Browser device UUID for session persistence (optional)",
+    )
+    user_name: Optional[str] = Field(
+        None, max_length=80,
+        description="User name for personalising the proposal (optional)",
+    )
+
     @field_validator("project_title", "industry")
     @classmethod
     def strip_and_clean(cls, v: str) -> str:
@@ -103,3 +119,41 @@ class ProposalHistoryItem(BaseModel):
     created_at: str
     size_kb: float
     download_url: str
+
+
+class EditProposalRequest(BaseModel):
+    """Request to iterate/edit an existing proposal with context."""
+    # Original proposal context (so the AI knows what it's editing)
+    project_title: str = Field(..., min_length=3, max_length=200)
+    industry: str = Field(..., min_length=2, max_length=100)
+    duration_months: int = Field(..., ge=1, le=60)
+    expected_users: int = Field(..., ge=10, le=100_000_000)
+    tech_stack: List[str] = Field(..., min_length=1)
+    client_name: Optional[str] = Field(None, max_length=200)
+
+    # Current sections (what the AI previously generated)
+    current_sections: Dict[str, Any] = Field(
+        ..., description="The existing proposal sections to edit"
+    )
+
+    # The user's edit instruction
+    edit_instruction: str = Field(
+        ..., min_length=5, max_length=1000,
+        description="Natural language instruction for what to change, add, or remove"
+    )
+
+    # Provider settings (same as ProposalRequest)
+    provider: Optional[str] = Field("ollama")
+    model: Optional[str] = Field(None)
+    api_key: Optional[str] = Field(None)
+    api_url: Optional[str] = Field(None)
+    device_id: Optional[str] = Field(None, max_length=128)
+
+    @field_validator("edit_instruction")
+    @classmethod
+    def clean_instruction(cls, v: str) -> str:
+        import re
+        v = re.sub(r"\s+", " ", v.strip())
+        # Basic injection guard
+        v = re.sub(r"(?i)(ignore|forget|disregard)\s+(all|previous|prior|above)\s*(instructions?|rules?|context)", "[REDACTED]", v)
+        return v
