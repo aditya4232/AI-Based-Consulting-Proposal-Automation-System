@@ -1,0 +1,16 @@
+{
+  "development_cost": 160000.0,
+  "infrastructure_cost": 700.0,
+  "contingency": 16000.0,
+  "discount": 0.0,
+  "total_estimated_cost": 176700.0,
+  "monthly_average": 22087.5,
+  "details": {
+    "duration_months": 8,
+    "expected_users": 2000,
+    "infra_per_user": 0.35,
+    "dev_rate_per_month": 20000.0,
+    "contingency_pct": 0.1,
+    "discount_pct": 0.0
+  }
+}
