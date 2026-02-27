@@ -334,20 +334,23 @@ class ProposalPDF(FPDF):
 
     # ── Section heading ────────────────────────────────────────────────────
     def section_heading(self, title: str):
-        self.set_font("Helvetica", "B", 11)
+        # Push to next page only if very little space left (< 30mm)
+        if self.get_y() > self.h - 30:
+            self.add_page()
+        self.set_font("Helvetica", "B", 10.5)
         self.set_text_color(*self.NAVY)
-        self.cell(0, 7, self._safe(title), new_x="LMARGIN", new_y="NEXT")
+        self.cell(0, 6, self._safe(title), new_x="LMARGIN", new_y="NEXT")
         self.set_draw_color(*self.ACCENT)
-        self.set_line_width(0.6)
-        self.line(15, self.get_y(), 75, self.get_y())
-        self.ln(2.5)
+        self.set_line_width(0.5)
+        self.line(15, self.get_y(), 70, self.get_y())
+        self.ln(2)
 
     # ── Body text ──────────────────────────────────────────────────────────
     def body_text(self, text: str):
-        self.set_font("Helvetica", "", 9)
+        self.set_font("Helvetica", "", 8.5)
         self.set_text_color(*self.TTEXT)
-        self.multi_cell(0, 4.8, self._safe(str(text)))
-        self.ln(2)
+        self.multi_cell(0, 4.2, self._safe(str(text)))
+        self.ln(1.5)
 
     # ── Table helpers ──────────────────────────────────────────────────────
     def _lines_needed(self, text: str, col_width: float) -> int:
@@ -357,10 +360,10 @@ class ProposalPDF(FPDF):
         w = self.get_string_width(self._safe(str(text)))
         return max(1, int(w / eff) + 1)
 
-    def _draw_wrapped_row(self, row: list, col_widths: list, line_h: float = 4.5):
-        self.set_font("Helvetica", "", 8.5)
+    def _draw_wrapped_row(self, row: list, col_widths: list, line_h: float = 4.0):
+        self.set_font("Helvetica", "", 8)
         max_lines = max(self._lines_needed(str(v), col_widths[i]) for i, v in enumerate(row))
-        row_height = max(6.5, max_lines * line_h + 2)
+        row_height = max(5.5, max_lines * line_h + 1.5)
 
         if self.get_y() + row_height > self.h - self.b_margin:
             self.add_page()
@@ -381,9 +384,9 @@ class ProposalPDF(FPDF):
     def data_table(self, headers: list, rows: list, col_widths: list = None):
         if col_widths is None:
             col_widths = [180 / len(headers)] * len(headers)
-        row_h = 6
+        row_h = 5.5
 
-        self.set_font("Helvetica", "B", 8)
+        self.set_font("Helvetica", "B", 7.5)
         self.set_fill_color(*self.NAVY)
         self.set_text_color(*self.WHITE)
         self.set_draw_color(*self.NAVY)
@@ -404,9 +407,7 @@ class ProposalPDF(FPDF):
         symbol = "Rs." if currency == "INR" else "$"
         headers = ["Cost Item", f"Amount ({currency})"]
         col_widths = [100, 80]
-        row_h = 8
-
-        row_h = 6.5
+        row_h = 5.5
         items = [
             ("Development Cost",   cost.get("development_cost", 0)),
             ("Infrastructure Cost", cost.get("infrastructure_cost", 0)),
@@ -415,7 +416,7 @@ class ProposalPDF(FPDF):
         if cost.get("discount", 0) > 0:
             items.append(("Discount Applied", -cost["discount"]))
 
-        self.set_font("Helvetica", "B", 8)
+        self.set_font("Helvetica", "B", 7.5)
         self.set_fill_color(*self.NAVY)
         self.set_text_color(*self.WHITE)
         self.set_draw_color(*self.NAVY)
@@ -427,7 +428,7 @@ class ProposalPDF(FPDF):
         alt = False
         for label, amount in items:
             self.set_fill_color(*(self.BGLIGHT if alt else self.WHITE))
-            self.set_font("Helvetica", "", 8)
+            self.set_font("Helvetica", "", 7.5)
             self.set_text_color(*self.TTEXT)
             self.cell(col_widths[0], row_h, label, border=1, fill=True)
             self.cell(col_widths[1], row_h, f"{symbol} {abs(amount):,.2f}", border=1, fill=True, align="R")
@@ -435,7 +436,7 @@ class ProposalPDF(FPDF):
             alt = not alt
 
         # Total
-        self.set_font("Helvetica", "B", 9.5)
+        self.set_font("Helvetica", "B", 8.5)
         self.set_fill_color(220, 233, 250)
         self.set_text_color(*self.NAVY)
         self.cell(col_widths[0], row_h, "TOTAL ESTIMATED COST", border=1, fill=True)
@@ -446,10 +447,10 @@ class ProposalPDF(FPDF):
 
         monthly = cost.get("monthly_average", 0)
         if monthly > 0:
-            self.set_font("Helvetica", "I", 7.5)
+            self.set_font("Helvetica", "I", 7)
             self.set_text_color(*self.TMID)
-            self.cell(0, 5, f"Monthly average: {symbol} {monthly:,.2f}", new_x="LMARGIN", new_y="NEXT")
-        self.ln(2)
+            self.cell(0, 4, f"Monthly average: {symbol} {monthly:,.2f}", new_x="LMARGIN", new_y="NEXT")
+        self.ln(1.5)
 
 
 # ====================================================================== #
@@ -504,9 +505,7 @@ def build_proposal_pdf(proposal_data: dict) -> str:
     pdf.section_heading("3. Technical Approach")
     pdf.body_text(proposal_data.get("technical_approach", "N/A"))
 
-    # ─────────── PAGE 3: Deliverables + Timeline ────────────────────────
-    pdf.add_page()
-
+    # ─────────── Deliverables + Timeline (flows naturally) ──────────────
     deliverables = proposal_data.get("deliverables", [])
     if deliverables:
         pdf.section_heading("4. Key Deliverables")
@@ -533,9 +532,7 @@ def build_proposal_pdf(proposal_data: dict) -> str:
     else:
         pdf.body_text(str(timeline_data))
 
-    # ─────────── PAGE 4: Cost + Team ────────────────────────────────────
-    pdf.add_page()
-
+    # ─────────── Cost + Team (flows naturally) ──────────────────────────
     pdf.section_heading("6. Estimated Cost Breakdown")
     if isinstance(cost, dict):
         pdf.cost_table(cost)
@@ -550,27 +547,25 @@ def build_proposal_pdf(proposal_data: dict) -> str:
         ]
         pdf.data_table(["Role", "Headcount", "Allocation"], t_rows, col_widths=[80, 35, 65])
 
-    # Place cost pie + team bar side by side at bottom of page 4
+    # Place cost pie + team bar side by side
     has_pie  = pie_path and os.path.isfile(pie_path)
     has_team = team_bar_path and os.path.isfile(team_bar_path)
     if has_pie or has_team:
-        chart_h = 58
+        chart_h = 48
         if pdf.get_y() + chart_h > pdf.h - pdf.b_margin:
             pdf.add_page()
         y_charts = pdf.get_y()
         if has_pie and has_team:
-            pdf.image(pie_path, x=15, y=y_charts, w=84)
-            pdf.image(team_bar_path, x=110, y=y_charts, w=84)
+            pdf.image(pie_path, x=15, y=y_charts, w=78)
+            pdf.image(team_bar_path, x=105, y=y_charts, w=90)
         elif has_pie:
-            pdf.image(pie_path, x=(210 - 84) / 2, y=y_charts, w=84)
+            pdf.image(pie_path, x=(210 - 78) / 2, y=y_charts, w=78)
         else:
-            pdf.image(team_bar_path, x=15, y=y_charts, w=155)
+            pdf.image(team_bar_path, x=15, y=y_charts, w=140)
         pdf.set_y(y_charts + chart_h)
-        pdf.ln(3)
+        pdf.ln(2)
 
-    # ─────────── PAGE 5: Risk Assessment ────────────────────────────────
-    pdf.add_page()
-
+    # ─────────── Risk Assessment (flows naturally) ──────────────────────
     section_num = 8 if team else 7
     pdf.section_heading(f"{section_num}. Risk Assessment")
     if isinstance(risk_data, list) and risk_data:
@@ -587,17 +582,17 @@ def build_proposal_pdf(proposal_data: dict) -> str:
         pdf.data_table(headers, risk_rows, widths)
 
         if risk_matrix_path and os.path.isfile(risk_matrix_path):
-            if pdf.get_y() + 58 > pdf.h - pdf.b_margin:
+            if pdf.get_y() + 48 > pdf.h - pdf.b_margin:
                 pdf.add_page()
-            x_c = (210 - 130) / 2
-            pdf.image(risk_matrix_path, x=x_c, w=130)
-            pdf.ln(3)
+            x_c = (210 - 120) / 2
+            pdf.image(risk_matrix_path, x=x_c, w=120)
+            pdf.ln(2)
     else:
         pdf.body_text(str(risk_data))
 
     # ─────────── CONFIDENTIALITY NOTICE ─────────────────────────────────
-    pdf.ln(8)
-    pdf.set_font("Helvetica", "I", 7.5)
+    pdf.ln(4)
+    pdf.set_font("Helvetica", "I", 7)
     pdf.set_text_color(160, 160, 160)
     pdf.multi_cell(
         0, 5,

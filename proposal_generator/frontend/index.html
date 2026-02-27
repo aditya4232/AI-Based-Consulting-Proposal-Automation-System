@@ -17,6 +17,132 @@
     }
   </script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- Chart.js for in-browser charts -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    /* Dark mode overrides (simple) */
+    /* ─── Dark-mode master overrides ─── */
+    body.dark { background: #0f172a; color: #e2eaf6; }
+
+    /* Backgrounds */
+    body.dark .bg-white,
+    body.dark .bg-white\/80,
+    body.dark .bg-white\/90    { background: #111827 !important; }
+    body.dark .bg-gray-50      { background: #0d1525 !important; }
+    body.dark .bg-gray-100     { background: #162032 !important; }
+    body.dark .bg-gray-900     { background: #020617 !important; }
+    body.dark .bg-brand-50,
+    body.dark .bg-brand-100    { background: #15102a !important; }
+    body.dark .bg-blue-50,
+    body.dark .bg-emerald-50,
+    body.dark .bg-amber-50,
+    body.dark .bg-red-50       { background: #111827 !important; }
+    body.dark .bg-gradient-to-br { background: #111827 !important; }
+
+    /* Borders */
+    body.dark .border-gray-100 { border-color: #1e293b !important; }
+    body.dark .border-gray-200 { border-color: #1e293b !important; }
+    body.dark .border-gray-300 { border-color: #283448 !important; }
+    body.dark .border-brand-100,
+    body.dark .border-brand-200 { border-color: #2d2157 !important; }
+
+    /* Text */
+    body.dark .text-gray-900   { color: #f1f5f9 !important; }
+    body.dark .text-gray-800   { color: #e2e8f0 !important; }
+    body.dark .text-gray-700   { color: #cbd5e1 !important; }
+    body.dark .text-gray-600   { color: #94a3b8 !important; }
+    body.dark .text-gray-500   { color: #94a3b8 !important; }
+    body.dark .text-gray-400   { color: #64748b !important; }
+    body.dark .text-gray-300   { color: #475569 !important; }
+    body.dark .placeholder\:text-gray-400::placeholder { color: #475569 !important; }
+
+    /* Header, footer, sidebar */
+    body.dark header,
+    body.dark footer           { background: rgba(17,24,39,0.85) !important; backdrop-filter: blur(12px); border-color: #1e293b !important; }
+    body.dark aside            { background: #111827 !important; border-color: #1e293b !important; }
+
+    /* Inputs */
+    body.dark .inp             { background: #0f172a !important; color: #e2e8f0 !important; border-color: #1e293b !important; }
+    body.dark .inp:focus       { border-color: #7c3aed !important; box-shadow: 0 0 0 3px rgba(124,58,237,0.25) !important; }
+    body.dark select           { background: #0f172a !important; color: #e2e8f0 !important; border-color: #1e293b !important; }
+    body.dark textarea         { background: #0f172a !important; color: #e2e8f0 !important; }
+
+    /* Buttons */
+    body.dark .btn-primary     { box-shadow: 0 1px 8px rgba(124,58,237,0.25); }
+    body.dark .btn-outline     { background: transparent; color: #cbd5e1; border-color: #334155; }
+    body.dark .btn-outline:hover { background: #1e293b; border-color: #7c3aed; color: #a78bfa; }
+
+    /* Hover states – buttons in history/dashboard rows */
+    body.dark .hover\:bg-gray-100:hover,
+    body.dark .hover\:bg-gray-50:hover  { background: #1e293b !important; }
+    body.dark .hover\:bg-brand-50:hover { background: #1a1040 !important; }
+    body.dark .hover\:bg-brand-100:hover{ background: #1a1040 !important; }
+    body.dark .hover\:bg-brand-200:hover{ background: #211550 !important; }
+    body.dark .hover\:bg-emerald-50:hover { background: #0c2a1d !important; }
+    body.dark .hover\:bg-blue-50:hover  { background: #0c1a2e !important; }
+    body.dark .hover\:bg-emerald-200:hover { background: #133d2b !important; }
+
+    /* Nav buttons */
+    body.dark .nav-btn         { color: #94a3b8 !important; }
+    body.dark .nav-btn:hover   { background: #1a1040 !important; color: #a78bfa !important; }
+    body.dark .nav-btn.bg-brand-100 { background: #1e1348 !important; color: #a78bfa !important; }
+
+    /* Cards / proposal rows */
+    body.dark .hover\:bg-gray-50:hover { background: #162032 !important; }
+    body.dark .shadow-sm       { box-shadow: 0 1px 3px rgba(0,0,0,0.4) !important; }
+    body.dark .shadow-lg       { box-shadow: 0 4px 12px rgba(0,0,0,0.5) !important; }
+
+    /* Model cards (settings) */
+    body.dark .model-card      { border-color: #1e293b; background: #111827; }
+    body.dark .model-card:hover{ border-color: #7c3aed; background: #15102a; }
+    body.dark .model-card.selected { border-color: #7c3aed; background: #1e1348; }
+
+    /* Provider radio cards */
+    body.dark .peer-checked\:bg-brand-50 { background: #1a1040 !important; }
+    body.dark .peer-checked\:border-brand-500 { border-color: #7c3aed !important; }
+    body.dark label .border-gray-200 { border-color: #1e293b !important; }
+    body.dark label .border-gray-200:hover { border-color: #7c3aed !important; }
+
+    /* Stat icon backgrounds */
+    body.dark .bg-brand-100    { background: #1e1348 !important; }
+    body.dark .bg-emerald-100  { background: #0c2a1d !important; }
+    body.dark .bg-blue-100     { background: #0c1a2e !important; }
+    body.dark .bg-amber-100    { background: #2a1e0a !important; }
+    body.dark .bg-red-100      { background: #2a0c0c !important; }
+
+    /* Toast notifications */
+    body.dark .slide-in.bg-white { background: #1e293b !important; color: #cbd5e1 !important; }
+
+    /* Loader overlay inner box */
+    body.dark #loader > div    { background: #111827 !important; }
+    body.dark #loader .border-gray-100 { border-color: #1e293b !important; }
+
+    /* Modals: registration, pdf, json, charts */
+    body.dark #user-reg-modal > div > div { background: #111827 !important; }
+    body.dark #charts-modal .bg-gray-50  { background: #0d1525 !important; }
+
+    /* Sidebar provider card gradient */
+    body.dark .from-brand-50,
+    body.dark .to-blue-50      { background: #111827 !important; }
+
+    /* Cost preview box */
+    body.dark .from-brand-50.to-blue-50,
+    body.dark #cost-box        { background: #15102a !important; border-color: #2d2157 !important; }
+
+    /* Edit/iterate panel */
+    body.dark #iterate-panel   { background: #111827 !important; border-color: #2d2157 !important; }
+    body.dark #edit-result     { background: #0d1525 !important; border-color: #1e293b !important; }
+
+    /* Background job tray cards */
+    body.dark #bg-job-tray .bg-white { background: #1e293b !important; border-color: #334155 !important; }
+
+    /* Scrollbar in dark mode */
+    body.dark ::-webkit-scrollbar-thumb { background: #334155; }
+    body.dark ::-webkit-scrollbar-track { background: #0f172a; }
+
+    /* Labels */
+    body.dark .label           { color: #94a3b8 !important; }
+  </style>
   <style>
     .fade-in{animation:fadeIn .3s ease}@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
     .slide-in{animation:slideIn .28s ease}@keyframes slideIn{from{transform:translateX(110%);opacity:0}to{transform:translateX(0);opacity:1}}
@@ -86,6 +212,9 @@
     <header class="sticky top-0 z-20 bg-white/80 backdrop-blur-sm border-b border-gray-200 px-4 sm:px-6 py-3 flex items-center gap-3">
       <button onclick="openSidebar()" class="lg:hidden p-2 -ml-2 rounded-xl hover:bg-gray-100 transition">
         <i data-lucide="menu" class="w-5 h-5"></i>
+      </button>
+      <button id="theme-toggle" onclick="toggleTheme()" title="Toggle theme" class="p-2 rounded-xl hover:bg-gray-100 transition">
+        <i id="theme-icon" data-lucide="moon" class="w-5 h-5"></i>
       </button>
       <!-- Magic Prompt -->
       <div class="flex-1 flex items-center gap-2 bg-brand-50 border border-brand-100 rounded-full pl-4 pr-1 py-1">
@@ -206,18 +335,26 @@
 
             <div class="flex flex-wrap gap-2 pt-1">
               <button type="button" onclick="estimateCost()" class="btn-outline"><i data-lucide="calculator" class="w-3.5 h-3.5"></i> Estimate Cost</button>
-              <button type="button" onclick="genJSON()" class="btn-outline"><i data-lucide="braces" class="w-3.5 h-3.5"></i> Preview JSON</button>
+              <button type="button" onclick="genPreview()" class="btn-outline"><i data-lucide="eye" class="w-3.5 h-3.5"></i> Preview</button>
               <button type="submit" class="btn-primary"><i data-lucide="file-down" class="w-3.5 h-3.5"></i> Generate &amp; Download PDF</button>
             </div>
           </form>
 
-          <!-- Preview Panel -->
-          <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 flex flex-col min-h-[280px]">
-            <div id="prev-empty" class="flex-1 flex flex-col items-center justify-center text-gray-300 gap-3">
+          <!-- Live Document Preview Panel -->
+          <div class="bg-white rounded-2xl border border-gray-100 shadow-sm flex flex-col min-h-[280px] max-h-[85vh] overflow-hidden">
+            <div id="prev-empty" class="flex-1 flex flex-col items-center justify-center text-gray-300 gap-3 p-5">
               <i data-lucide="file-search" class="w-14 h-14 opacity-30"></i>
-              <p class="text-sm">Click <b class="text-gray-400">Preview JSON</b> to see the AI output here</p>
+              <p class="text-sm">Click <b class="text-gray-400">Preview</b> or <b class="text-gray-400">Generate PDF</b> to see the document here</p>
             </div>
-            <pre id="prev-json" class="hidden flex-1 bg-gray-900 text-emerald-300 rounded-xl p-4 text-xs overflow-auto whitespace-pre-wrap leading-relaxed font-mono"></pre>
+            <div id="prev-doc" class="hidden flex-1 flex flex-col overflow-hidden">
+              <div class="flex items-center justify-between px-4 py-2 border-b border-gray-100 shrink-0 bg-gray-50">
+                <span class="text-xs font-bold text-gray-500 uppercase tracking-wide flex items-center gap-1.5"><i data-lucide="file-text" class="w-3.5 h-3.5"></i> Document Preview</span>
+                <div class="flex items-center gap-1.5">
+                  <button onclick="if(_lastSections) openJSONModal(_lastSections, _lastProposalPayload?_lastProposalPayload.project_title:'Proposal')" class="text-[10px] font-semibold text-gray-500 border border-gray-200 rounded px-2 py-1 hover:bg-emerald-50 hover:text-emerald-600 transition flex items-center gap-1"><i data-lucide="braces" class="w-3 h-3"></i> JSON</button>
+                </div>
+              </div>
+              <div id="prev-doc-body" class="flex-1 overflow-y-auto p-5 text-sm leading-relaxed"></div>
+            </div>
           </div>
         </div>
 
@@ -445,6 +582,24 @@
   </div>
 </div>
 
+<!-- ══ CHARTS VIEWER MODAL ══ -->
+<div id="charts-modal" class="hidden fixed inset-0 z-[56] bg-black/70 backdrop-blur-sm flex flex-col items-center justify-center p-4">
+  <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col modal-enter">
+    <div class="flex items-center justify-between px-5 py-3 border-b border-gray-200 dark:border-gray-700 shrink-0">
+      <div class="flex items-center gap-2"><i data-lucide="bar-chart-2" class="w-4 h-4 text-brand-600"></i><span id="charts-modal-title" class="text-gray-900 dark:text-white font-semibold text-sm">Proposal Charts</span></div>
+      <div class="flex items-center gap-2">
+        <button onclick="closeChartsModal()" class="p-2 rounded-lg text-gray-500 hover:text-gray-800 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+    </div>
+    <div class="p-5 overflow-auto grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div class="bg-gray-50 dark:bg-gray-800 rounded-xl p-3"><canvas id="costChart"></canvas></div>
+      <div class="bg-gray-50 dark:bg-gray-800 rounded-xl p-3"><canvas id="teamChart"></canvas></div>
+      <div class="bg-gray-50 dark:bg-gray-800 rounded-xl p-3"><canvas id="timelineChart"></canvas></div>
+      <div class="bg-gray-50 dark:bg-gray-800 rounded-xl p-3"><canvas id="riskChart"></canvas></div>
+    </div>
+  </div>
+</div>
+
 <!-- ══ TOAST BOX ══ -->
 <!-- ══ BACKGROUND JOB TRAY ══ -->
 <div id="bg-job-tray" class="fixed bottom-28 right-4 z-50 space-y-2 w-72"></div>
@@ -544,6 +699,7 @@ function _bgAdd(title) {
   var id = ++_bgSeq;
   _bgJobs[id] = { title: title, status: 'running' };
   _bgRender();
+  _bgPersist();
   return id;
 }
 
@@ -554,6 +710,7 @@ function _bgDone(id, blobUrl, dlName, viewTitle) {
   _bgJobs[id].dlName = dlName;
   _bgJobs[id].viewTitle = viewTitle;
   _bgRender();
+  _bgPersist();
   toast('\u2713 PDF ready: ' + _bgJobs[id].title.slice(0, 35), 'success');
 }
 
@@ -562,12 +719,14 @@ function _bgFail(id, msg) {
   _bgJobs[id].status = 'error';
   _bgJobs[id].error = msg;
   _bgRender();
+  _bgPersist();
   toast('\u2717 PDF failed: ' + msg.slice(0, 50), 'error');
 }
 
 function _bgDismiss(id) {
   delete _bgJobs[id];
   _bgRender();
+  _bgPersist();
 }
 
 function _bgRender() {
@@ -606,6 +765,25 @@ function _bgRender() {
       + '</div>'
       + '</div>';
   }).join('');
+}
+
+// Persist background jobs (metadata only) so completed items survive refresh
+function _bgPersist() {
+  try {
+    var copy = {};
+    Object.keys(_bgJobs).forEach(function(k){ var j = _bgJobs[k]; copy[k] = { title:j.title, status:j.status, viewTitle:j.viewTitle || null, dlName:j.dlName || null }; });
+    localStorage.setItem('pai_bg_jobs', JSON.stringify({ seq:_bgSeq, jobs: copy }));
+  } catch(e) {}
+}
+
+function _bgRestore() {
+  try {
+    var raw = localStorage.getItem('pai_bg_jobs'); if (!raw) return;
+    var obj = JSON.parse(raw);
+    _bgSeq = obj.seq || _bgSeq;
+    _bgJobs = obj.jobs || {};
+    _bgRender();
+  } catch(e) {}
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -656,7 +834,7 @@ function ensureUserName() {
 
 function _applyUserName(name) {
   if ($('sb-user')) {
-    $('sb-user').textContent = name ? 'Hi, ' + name + ' \uD83D\uDC4B' : '';
+    $('sb-user').textContent = name ? 'Hi, ' + name : '';
   }
 }
 
@@ -1000,15 +1178,18 @@ function renderList(items, containerId, limit) {
     var title = p.project_title || p.filename || 'Proposal';
     var industry = p.industry ? '<span class="bg-brand-50 text-brand-700 px-1.5 py-0.5 rounded text-[10px] font-semibold">' + p.industry + '</span>' : '';
     var provider = p.provider ? '<span class="bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded text-[10px]">' + p.provider + (p.model ? ':' + p.model.split(':')[0] : '') + '</span>' : '';
-    /* View JSON button — parse sections_json if available */
+    /* View JSON / Charts buttons — parse sections_json if available */
     var jsonBtn = '';
+    var chartsBtn = '';
     if (p.sections_json) {
       var safeId = ('item_' + Math.random().toString(36).slice(2)).replace(/[^a-zA-Z0-9_]/g, '');
       /* Store in window namespace for the onclick callback */
       try { window['__sj_' + safeId] = JSON.parse(p.sections_json); } catch(_) { window['__sj_' + safeId] = null; }
+      try { window['__sp_' + safeId] = p; } catch(_) { window['__sp_' + safeId] = null; }
       if (window['__sj_' + safeId]) {
         var safeTitle = title.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
         jsonBtn = '<button onclick="openJSONModal(window[\'__sj_' + safeId + '\'],\'' + safeTitle + '\')" class="flex items-center gap-1.5 text-xs font-semibold text-gray-600 border border-gray-200 rounded-lg px-3 py-1.5 hover:bg-emerald-50 hover:text-emerald-600 hover:border-emerald-300 transition"><i data-lucide="braces" class="w-3.5 h-3.5"></i> JSON</button>';
+        chartsBtn = '<button onclick="openChartsModal(window[\'__sj_' + safeId + '\'], window[\'__sp_' + safeId + '\'], \'' + safeTitle + '\')" class="flex items-center gap-1.5 text-xs font-semibold text-gray-600 border border-gray-200 rounded-lg px-3 py-1.5 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-300 transition"><i data-lucide="bar-chart-2" class="w-3.5 h-3.5"></i> Charts</button>';
       }
     }
     /* Edit/Iterate button */
@@ -1031,7 +1212,7 @@ function renderList(items, containerId, limit) {
           '<button onclick="openPDF(\'' + (p.view_url || p.download_url + '?inline=true') + '\', \'' + title.replace(/'/g, "\\'") + '\')" class="flex items-center gap-1.5 text-xs font-semibold text-gray-600 border border-gray-200 rounded-lg px-3 py-1.5 hover:bg-brand-50 hover:text-brand-600 hover:border-brand-300 transition">' +
             '<i data-lucide="eye" class="w-3.5 h-3.5"></i> View' +
           '</button>' : '') +
-        jsonBtn +
+        jsonBtn + chartsBtn +
         editBtn +
         (p.download_url || p.view_url ?
           '<a href="' + (p.download_url || p.view_url) + '" download class="flex items-center gap-1.5 text-xs font-semibold text-gray-600 border border-gray-200 rounded-lg px-3 py-1.5 hover:bg-emerald-50 hover:text-emerald-600 hover:border-emerald-300 transition">' +
@@ -1179,6 +1360,101 @@ document.addEventListener('keydown', function(e) {
   }
 }, true);
 
+/* Theme toggle and charts viewer */
+var _charts = {};
+function applyTheme() {
+  var t = localStorage.getItem('pai_theme') || 'light';
+  if (t === 'dark') {
+    document.body.classList.add('dark');
+    document.documentElement.classList.add('dark');
+    $('theme-icon').setAttribute('data-lucide','sun');
+  } else {
+    document.body.classList.remove('dark');
+    document.documentElement.classList.remove('dark');
+    $('theme-icon').setAttribute('data-lucide','moon');
+  }
+  /* Ensure Lucide icons re-render after attribute changes */
+  try { lucide.createIcons(); } catch(e) { console.warn('lucide createIcons failed', e); }
+}
+function toggleTheme() {
+  var cur = document.body.classList.contains('dark') ? 'dark' : 'light';
+  var next = cur === 'dark' ? 'light' : 'dark';
+  localStorage.setItem('pai_theme', next);
+  applyTheme();
+}
+
+function openChartsModal(sectionsObj, payloadObj, title) {
+  // support older signature openChartsModal(sections, title) and new (sections,payload,title)
+  var sections = sectionsObj || {};
+  var payload = {};
+  var modalTitle = title || 'Proposal';
+  if (typeof payloadObj === 'string' && !title) {
+    modalTitle = payloadObj;
+  } else if (typeof payloadObj === 'object' && payloadObj) {
+    payload = payloadObj;
+    modalTitle = title || (payload && payload.project_title) || (sections && sections.project_title) || 'Proposal';
+  } else {
+    modalTitle = title || (sections && sections.project_title) || 'Proposal';
+  }
+  $('charts-modal-title').textContent = modalTitle + ' — Charts';
+  $('charts-modal').classList.remove('hidden'); document.body.style.overflow = 'hidden';
+
+  // Cost pie - check payload.estimated_cost or payload.estimated_cost
+  var cost = (payload && payload.estimated_cost) || (payload && payload.cost) || null;
+  try { if (_charts.cost) _charts.cost.destroy(); } catch(e){}
+  try { if (_charts.team) _charts.team.destroy(); } catch(e){}
+  try { if (_charts.timeline) _charts.timeline.destroy(); } catch(e){}
+  try { if (_charts.risk) _charts.risk.destroy(); } catch(e){}
+
+  // Render cost chart if present
+  if (cost && typeof cost === 'object') {
+    var labels = [], data = [];
+    ['development_cost','infrastructure_cost','contingency','discount'].forEach(function(k){ if (cost[k] && Number(cost[k]) !== 0){ labels.push(k.replace('_',' ')); data.push(Math.abs(Number(cost[k]))); }});
+    if (labels.length) {
+      var ctx = document.getElementById('costChart').getContext('2d');
+      _charts.cost = new Chart(ctx, { type: 'doughnut', data: { labels: labels, datasets:[{ data: data, backgroundColor: ['#1e40af','#2563eb','#60a5fa','#f59e0b'] }] }, options: { plugins:{legend:{position:'bottom'}} } });
+    }
+  } else {
+    // clear canvas
+    var ctx = document.getElementById('costChart').getContext('2d'); ctx.clearRect(0,0,ctx.canvas.width, ctx.canvas.height);
+  }
+
+  // Team chart - try payload.team_composition or sections.team_composition
+  var team = (payload && payload.team_composition) || (sections && sections.team_composition) || [];
+  if (team && team.length) {
+    var labs = team.map(function(t){ return t.role || t.name || 'Role'; });
+    var vals = team.map(function(t){ var c = t.count || t.headcount || 1; return Number(String(c).split('-')[0]) || 1; });
+    var ctx2 = document.getElementById('teamChart').getContext('2d');
+    _charts.team = new Chart(ctx2, { type: 'bar', data: { labels: labs, datasets:[{ label: 'Headcount', data: vals, backgroundColor: '#3b82f6' }] }, options: { indexAxis: 'y', plugins:{legend:{display:false}}, scales:{x:{beginAtZero:true}} } });
+  } else { var ctx2 = document.getElementById('teamChart').getContext('2d'); ctx2.clearRect(0,0,ctx2.canvas.width, ctx2.canvas.height); }
+
+  // Timeline chart from sections.timeline
+  var timeline = sections && sections.timeline ? sections.timeline : (payload && payload.timeline ? payload.timeline : []);
+  if (timeline && timeline.length) {
+    var tLabs = timeline.map(function(p){ return p.phase || p[0] || 'Phase'; });
+    var tVals = timeline.map(function(p){ return Number(p.weeks || (p[1]||0)) || 0; });
+    var ctx3 = document.getElementById('timelineChart').getContext('2d');
+    _charts.timeline = new Chart(ctx3, { type: 'bar', data: { labels: tLabs, datasets:[{ label:'Weeks', data: tVals, backgroundColor: '#7c3aed' }] }, options: { plugins:{legend:{display:false}}, scales:{y:{beginAtZero:true}} } });
+  } else { var ctx3 = document.getElementById('timelineChart').getContext('2d'); ctx3.clearRect(0,0,ctx3.canvas.width, ctx3.canvas.height); }
+
+  // Risk chart aggregated counts by impact
+  var risks = sections && sections.risk_assessment ? sections.risk_assessment : (payload && payload.risk_assessment ? payload.risk_assessment : []);
+  if (risks && risks.length) {
+    var counts = { High:0, Medium:0, Low:0 };
+    risks.forEach(function(r){ var imp = (r.impact || 'Medium'); if (counts[imp]!==undefined) counts[imp]++; });
+    var ctx4 = document.getElementById('riskChart').getContext('2d');
+    _charts.risk = new Chart(ctx4, { type: 'pie', data: { labels: ['High','Medium','Low'], datasets:[{ data: [counts.High, counts.Medium, counts.Low], backgroundColor: ['#ef4444','#f59e0b','#22c55e'] }] }, options:{ plugins:{legend:{position:'bottom'}} } });
+  } else { var ctx4 = document.getElementById('riskChart').getContext('2d'); ctx4.clearRect(0,0,ctx4.canvas.width, ctx4.canvas.height); }
+}
+
+function closeChartsModal() {
+  try { if (_charts.cost) _charts.cost.destroy(); } catch(e){}
+  try { if (_charts.team) _charts.team.destroy(); } catch(e){}
+  try { if (_charts.timeline) _charts.timeline.destroy(); } catch(e){}
+  try { if (_charts.risk) _charts.risk.destroy(); } catch(e){}
+  $('charts-modal').classList.add('hidden'); document.body.style.overflow = ''; 
+}
+
 /* ═══════════════════════════════════════════════════════════
    EDIT / ITERATE
 ═══════════════════════════════════════════════════════════ */
@@ -1223,11 +1499,9 @@ async function submitEdit() {
     };
     $('edit-result').classList.remove('hidden');
     $('edit-json-preview').textContent = JSON.stringify(_lastSections, null, 2);
-    /* Also update the preview panel */
-    $('prev-empty').classList.add('hidden');
-    $('prev-json').classList.remove('hidden');
-    $('prev-json').textContent = JSON.stringify(d, null, 2);
-    toast('Proposal updated! Review below or download a new PDF.', 'success');
+    /* Update the rich document preview */
+    _renderDocPreview(_lastProposalPayload || payload(), _lastSections, d);
+    toast('Proposal updated! Review the preview or download a new PDF.', 'success');
   } catch (err) {
     toast(err.message || 'Edit failed', 'error');
   }
@@ -1290,7 +1564,8 @@ async function submitEditAndPDF() {
 /* ═══════════════════════════════════════════════════════════
    JSON PREVIEW
 ═══════════════════════════════════════════════════════════ */
-async function genJSON() {
+/* genPreview = AI-generates sections then renders document preview */
+async function genPreview() {
   var form = $('prop-form');
   if (!form.checkValidity()) { form.reportValidity(); return; }
   loader(true, 'Generating draft\u2026', 'AI is building your proposal structure.');
@@ -1302,19 +1577,135 @@ async function genJSON() {
     });
     if (!r.ok) { var e = await r.text(); throw new Error(e); }
     var d = await r.json();
-    /* Store context */
     _lastProposalPayload = p;
     _lastSections = { executive_summary: d.executive_summary, technical_approach: d.technical_approach, timeline: d.timeline, risk_assessment: d.risk_assessment, deliverables: d.deliverables };
-    $('prev-empty').classList.add('hidden');
-    $('prev-json').classList.remove('hidden');
-    $('prev-json').textContent = JSON.stringify(d, null, 2);
-    /* Show iterate panel */
+    _renderDocPreview(p, _lastSections, d);
     $('iterate-panel').classList.remove('hidden');
     $('edit-result').classList.add('hidden');
     toast('Draft generated! Use the iterate panel below to refine.', 'success');
   } catch (e) { toast(e.message || 'Generation failed', 'error'); }
   loader(false);
 }
+/* Keep genJSON as alias for backward compat */
+var genJSON = genPreview;
+
+/* ── Rich document preview renderer ── */
+function _renderDocPreview(p, sections, fullResp) {
+  $('prev-empty').classList.add('hidden');
+  $('prev-doc').classList.remove('hidden');
+  var body = $('prev-doc-body');
+  var h = '';
+  var isDark = document.body.classList.contains('dark');
+  var accent = '#1e3a5f';
+  var lightBg = isDark ? '#111827' : '#f8fafc';
+  var borderC = isDark ? '#1e293b' : '#e5e7eb';
+
+  // Title block
+  h += '<div style="background:linear-gradient(135deg,#1e3a5f,#2563eb);color:#fff;padding:16px 20px;border-radius:12px;margin-bottom:16px">';
+  h += '<div style="font-size:8px;letter-spacing:2px;text-transform:uppercase;opacity:.7;margin-bottom:4px">CONSULTING PROPOSAL</div>';
+  h += '<div style="font-size:20px;font-weight:800;line-height:1.2">' + _esc(p.project_title || 'Project Proposal') + '</div>';
+  if (p.client_name) h += '<div style="font-size:12px;margin-top:4px;opacity:.8">Prepared for: ' + _esc(p.client_name) + '</div>';
+  h += '<div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:10px;font-size:10px;opacity:.85">';
+  h += '<span>' + _esc(p.industry || '') + '</span>';
+  h += '<span>' + (p.duration_months || '') + ' months</span>';
+  h += '<span>' + Number(p.expected_users || 0).toLocaleString() + '+ users</span>';
+  if (p.tech_stack && p.tech_stack.length) h += '<span>' + p.tech_stack.join(', ') + '</span>';
+  h += '</div></div>';
+
+  // Section helper
+  function sec(num, title, content) {
+    var s = '<div style="margin-bottom:14px">';
+    s += '<div style="font-size:13px;font-weight:700;color:' + accent + ';border-bottom:2px solid #2563eb;padding-bottom:3px;margin-bottom:6px">' + num + '. ' + _esc(title) + '</div>';
+    s += content;
+    s += '</div>';
+    return s;
+  }
+
+  // 1. Executive Summary
+  h += sec(1, 'Executive Summary', '<p style="font-size:12px;line-height:1.6;color:' + (isDark?'#cbd5e1':'#1e1e1e') + '">' + _esc(sections.executive_summary || 'N/A') + '</p>');
+
+  // 2. Technical Approach
+  h += sec(2, 'Technical Approach', '<p style="font-size:12px;line-height:1.6;color:' + (isDark?'#cbd5e1':'#1e1e1e') + '">' + _esc(sections.technical_approach || 'N/A') + '</p>');
+
+  // 3. Deliverables
+  var dels = sections.deliverables || [];
+  var delH = '';
+  if (Array.isArray(dels) && dels.length) {
+    delH = '<table style="width:100%;border-collapse:collapse;font-size:11px">';
+    delH += '<tr style="background:' + accent + ';color:#fff"><th style="padding:4px 8px;text-align:left;border-radius:4px 0 0 0">#</th><th style="padding:4px 8px;text-align:left;border-radius:0 4px 0 0">Deliverable</th></tr>';
+    dels.forEach(function(d,i){ delH += '<tr style="background:' + (i%2===0?lightBg:'transparent') + '"><td style="padding:3px 8px;border-bottom:1px solid '+borderC+'">' + (i+1) + '</td><td style="padding:3px 8px;border-bottom:1px solid '+borderC+'">' + _esc(String(d)) + '</td></tr>'; });
+    delH += '</table>';
+  } else { delH = '<p style="font-size:12px">' + _esc(String(dels)) + '</p>'; }
+  h += sec(3, 'Key Deliverables', delH);
+
+  // 4. Timeline
+  var tl = sections.timeline || [];
+  var tlH = '';
+  if (Array.isArray(tl) && tl.length) {
+    tlH = '<table style="width:100%;border-collapse:collapse;font-size:11px">';
+    tlH += '<tr style="background:' + accent + ';color:#fff"><th style="padding:4px 8px;text-align:left">Phase</th><th style="padding:4px 8px;text-align:center;width:50px">Weeks</th><th style="padding:4px 8px;text-align:left">Description</th></tr>';
+    tl.forEach(function(p,i){ tlH += '<tr style="background:' + (i%2===0?lightBg:'transparent') + '"><td style="padding:3px 8px;border-bottom:1px solid '+borderC+'">' + _esc(p.phase||'') + '</td><td style="padding:3px 8px;text-align:center;border-bottom:1px solid '+borderC+'">' + (p.weeks||'') + 'w</td><td style="padding:3px 8px;border-bottom:1px solid '+borderC+'">' + _esc(p.description||'') + '</td></tr>'; });
+    tlH += '</table>';
+    // Mini Gantt visual
+    var totalW = tl.reduce(function(a,p){ return a+(p.weeks||0); },0) || 1;
+    tlH += '<div style="margin-top:8px;display:flex;border-radius:6px;overflow:hidden;height:22px;font-size:9px">';
+    var gCols = ['#1e40af','#2563eb','#3b82f6','#60a5fa','#818cf8','#a78bfa'];
+    tl.forEach(function(p,i){ var pct = ((p.weeks||0)/totalW*100).toFixed(1); tlH += '<div style="width:'+pct+'%;background:'+gCols[i%gCols.length]+';color:#fff;display:flex;align-items:center;justify-content:center;white-space:nowrap;overflow:hidden;padding:0 4px" title="'+_esc(p.phase||'')+': '+(p.weeks||0)+'w">'+(p.weeks||0)+'w</div>'; });
+    tlH += '</div>';
+  }
+  h += sec(4, 'Project Timeline', tlH || '<p style="font-size:12px">' + _esc(String(tl)) + '</p>');
+
+  // 5. Cost Estimate (from fullResp or compute client-side)
+  var cost = (fullResp && fullResp.estimated_cost) || null;
+  var costH = '';
+  if (cost && typeof cost === 'object') {
+    var sym = cost.currency === 'INR' ? '\u20B9' : '$';
+    costH = '<table style="width:100%;border-collapse:collapse;font-size:11px">';
+    costH += '<tr style="background:' + accent + ';color:#fff"><th style="padding:4px 8px;text-align:left">Cost Item</th><th style="padding:4px 8px;text-align:right">Amount</th></tr>';
+    [['Development',cost.development_cost],['Infrastructure',cost.infrastructure_cost],['Contingency (10%)',cost.contingency]].forEach(function(r,i){
+      if(r[1]) costH += '<tr style="background:'+(i%2===0?lightBg:'transparent')+'"><td style="padding:3px 8px;border-bottom:1px solid '+borderC+'">' + r[0] + '</td><td style="padding:3px 8px;text-align:right;border-bottom:1px solid '+borderC+'">' + sym + ' ' + Number(r[1]).toLocaleString('en-IN') + '</td></tr>';
+    });
+    costH += '<tr style="background:#dbeafe;font-weight:700"><td style="padding:5px 8px">TOTAL</td><td style="padding:5px 8px;text-align:right">' + sym + ' ' + Number(cost.total_estimated_cost||0).toLocaleString('en-IN') + '</td></tr>';
+    costH += '</table>';
+    if (cost.monthly_average) costH += '<p style="font-size:10px;color:#64748b;margin-top:3px">Monthly avg: ' + sym + ' ' + Number(cost.monthly_average).toLocaleString('en-IN') + '</p>';
+  } else {
+    var m = parseInt(p.duration_months)||6, u = parseInt(p.expected_users)||100;
+    var dev = 150000*m, pu = u<=1000?42:u<=10000?29:17, infra=pu*u, cont=dev*0.1, tot=dev+infra+cont;
+    costH = '<table style="width:100%;border-collapse:collapse;font-size:11px"><tr style="background:'+accent+';color:#fff"><th style="padding:4px 8px;text-align:left">Item</th><th style="padding:4px 8px;text-align:right">Amount (INR)</th></tr>';
+    costH += '<tr><td style="padding:3px 8px">Development</td><td style="padding:3px 8px;text-align:right">\u20B9 '+dev.toLocaleString('en-IN')+'</td></tr>';
+    costH += '<tr style="background:'+lightBg+'"><td style="padding:3px 8px">Infrastructure</td><td style="padding:3px 8px;text-align:right">\u20B9 '+infra.toLocaleString('en-IN')+'</td></tr>';
+    costH += '<tr><td style="padding:3px 8px">Contingency (10%)</td><td style="padding:3px 8px;text-align:right">\u20B9 '+cont.toLocaleString('en-IN')+'</td></tr>';
+    costH += '<tr style="background:#dbeafe;font-weight:700"><td style="padding:5px 8px">TOTAL</td><td style="padding:5px 8px;text-align:right">\u20B9 '+tot.toLocaleString('en-IN')+'</td></tr></table>';
+  }
+  h += sec(5, 'Cost Estimate', costH);
+
+  // 6. Risk Assessment
+  var risks = sections.risk_assessment || [];
+  var riskH = '';
+  if (Array.isArray(risks) && risks.length) {
+    riskH = '<table style="width:100%;border-collapse:collapse;font-size:11px">';
+    riskH += '<tr style="background:'+accent+';color:#fff"><th style="padding:4px 8px;text-align:left">Risk</th><th style="padding:4px 6px;text-align:center;width:55px">Impact</th><th style="padding:4px 6px;text-align:center;width:65px">Prob.</th><th style="padding:4px 8px;text-align:left">Mitigation</th></tr>';
+    risks.forEach(function(r,i){
+      var imp = r.impact||'Medium';
+      var impColor = imp==='High'?'#ef4444':imp==='Low'?'#22c55e':'#f59e0b';
+      riskH += '<tr style="background:'+(i%2===0?lightBg:'transparent')+'">';
+      riskH += '<td style="padding:3px 8px;border-bottom:1px solid '+borderC+'">' + _esc(r.risk||'') + '</td>';
+      riskH += '<td style="padding:3px 6px;text-align:center;border-bottom:1px solid '+borderC+'"><span style="background:'+impColor+';color:#fff;padding:1px 6px;border-radius:4px;font-size:9px;font-weight:600">'+_esc(imp)+'</span></td>';
+      riskH += '<td style="padding:3px 6px;text-align:center;border-bottom:1px solid '+borderC+'">' + _esc(r.probability||'') + '</td>';
+      riskH += '<td style="padding:3px 8px;border-bottom:1px solid '+borderC+'">' + _esc(r.mitigation||'') + '</td>';
+      riskH += '</tr>';
+    });
+    riskH += '</table>';
+  }
+  h += sec(6, 'Risk Assessment', riskH || '<p style="font-size:12px">N/A</p>');
+
+  // Confidentiality footer
+  h += '<div style="text-align:center;font-size:9px;color:#9ca3af;margin-top:12px;padding-top:8px;border-top:1px solid '+borderC+'">This document is CONFIDENTIAL. ProposalStudio &mdash; ' + new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'}) + '</div>';
+
+  body.innerHTML = h;
+}
+
+function _esc(s) { var d = document.createElement('div'); d.textContent = s || ''; return d.innerHTML; }
 
 /* ═══════════════════════════════════════════════════════════
    PDF GENERATION
@@ -1339,14 +1730,14 @@ $('prop-form').addEventListener('submit', async function(e) {
     var dlName = jobTitle.replace(/[ /\\]/g, '_') + '_Proposal.pdf';
     /* Fetch the JSON version to get sections for iterate context */
     try {
-      var r2 = await fetch(API + '/generate-proposal', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(p)
-      });
-      if (r2.ok) {
-        var d2 = await r2.json();
-        _lastProposalPayload = p;
-        _lastSections = { executive_summary: d2.executive_summary, technical_approach: d2.technical_approach, timeline: d2.timeline, risk_assessment: d2.risk_assessment, deliverables: d2.deliverables };
+      if (_lastProposalId) {
+        var r2 = await fetch(API + '/session/' + encodeURIComponent(cfg.device_id) + '/proposal/' + encodeURIComponent(_lastProposalId) + '/sections', { headers: _deviceHeaders() });
+        if (r2.ok) {
+          var d2 = await r2.json();
+          _lastProposalPayload = p;
+          _lastSections = { executive_summary: d2.executive_summary, technical_approach: d2.technical_approach, timeline: d2.timeline, risk_assessment: d2.risk_assessment, deliverables: d2.deliverables };
+          _renderDocPreview(p, _lastSections, d2);
+        }
       }
     } catch (_) {}
 
@@ -1447,6 +1838,7 @@ async function init() {
   loadCfg();
   ensureDeviceId();
   ensureUserName();
+  applyTheme();
   lucide.createIcons();
   nav('dashboard');
   /* Run independent start-up tasks in parallel */

@@ -109,6 +109,20 @@ def health_check():
         uptime_seconds=round(time.time() - _start_time, 2),
     )
 
+    @app.get("/session/{device_id}/proposal/{proposal_id}/sections")
+    def proposal_sections(device_id: str, proposal_id: int, x_device_token: str | None = Header(default=None)):
+        """Return stored proposal sections for a proposal belonging to the device. Requires X-Device-Token."""
+        if not _verify_device_token(device_id, x_device_token):
+            raise HTTPException(status_code=403, detail="Invalid or missing X-Device-Token header")
+        # Ensure the proposal belongs to this device
+        rows = get_device_proposals(device_id)
+        if not any(r.get("id") == proposal_id for r in rows):
+            raise HTTPException(status_code=404, detail="Proposal not found for this device")
+        sections = get_proposal_sections(proposal_id)
+        if not sections:
+            raise HTTPException(status_code=404, detail="Sections not available for this proposal")
+        return sections
+
 
 # ──────────────────────────────────────────────────────────────────────────── #
 #  SESSION / DEVICE ENDPOINTS                                                    #
