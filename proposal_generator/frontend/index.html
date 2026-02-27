@@ -1,0 +1,398 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI Proposal Generator</title>
+    <!-- Google Fonts -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <!-- Font Awesome for Icons -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+
+    <link rel="stylesheet" href="/static/css/style.css" />
+  </head>
+  <body>
+    <!-- Abstract Background Elements -->
+    <div class="bg-gradient fixed"></div>
+    <div class="bg-blur top-left fixed"></div>
+    <div class="bg-blur bottom-right fixed"></div>
+
+    <div class="app-container">
+      <!-- Sidebar Navigation -->
+      <nav class="sidebar glass-panel">
+        <div class="logo">
+          <i class="fa-solid fa-sparkles text-accent"></i>
+          <h2>ProposeAI</h2>
+        </div>
+
+        <ul class="nav-links">
+          <li class="active" data-target="dashboard">
+            <i class="fa-solid fa-house"></i>
+            <span>Dashboard</span>
+          </li>
+          <li data-target="generate">
+            <i class="fa-solid fa-wand-magic-sparkles"></i>
+            <span>Generate</span>
+          </li>
+          <li data-target="history">
+            <i class="fa-solid fa-clock-rotate-left"></i>
+            <span>History</span>
+          </li>
+          <li data-target="settings">
+            <i class="fa-solid fa-gear"></i>
+            <span>Settings</span>
+          </li>
+          <li onclick="window.location.href = '/static/instruction.html'">
+            <i class="fa-solid fa-book-open"></i>
+            <span>Instructions</span>
+          </li>
+        </ul>
+
+        <div class="user-status">
+          <div class="status-indicator online"></div>
+          <div class="status-info">
+            <span class="status-label">API Status</span>
+            <span class="status-text" id="api-status">Connecting...</span>
+          </div>
+        </div>
+      </nav>
+
+      <!-- Main Content Area -->
+      <main class="main-content">
+        <!-- Top Search Bar (Inspired by Lantern AI) -->
+        <header class="top-nav glass-panel">
+          <div class="search-container">
+            <span class="ai-badge">BETA</span>
+            <div class="search-input-wrapper">
+              <input
+                type="text"
+                placeholder="Generate a full proposal for e.g. Acme Inc's Cloud Migration in 6 months..."
+                id="magic-prompt"
+              />
+              <i
+                class="fa-solid fa-wand-magic-sparkles search-icon text-accent"
+              ></i>
+              <button class="search-btn" id="magic-btn">Magic Generate</button>
+            </div>
+          </div>
+        </header>
+
+        <!-- Views Container -->
+        <div class="views">
+          <!-- View: Dashboard -->
+          <section id="view-dashboard" class="view active">
+            <div class="welcome-header">
+              <h1>Welcome back 👋</h1>
+              <p>
+                Generate precise, deterministic consulting proposals with AI.
+                <a href="/static/instruction.html">Read the instructions</a>.
+              </p>
+            </div>
+
+            <div class="dashboard-stats">
+              <div class="stat-card glass-panel">
+                <div class="stat-icon purple">
+                  <i class="fa-solid fa-file-invoice"></i>
+                </div>
+                <div class="stat-content">
+                  <h3>Total Generated</h3>
+                  <p id="stat-total">--</p>
+                </div>
+              </div>
+              <div class="stat-card glass-panel">
+                <div class="stat-icon green">
+                  <i class="fa-solid fa-server"></i>
+                </div>
+                <div class="stat-content">
+                  <h3>Active Provider</h3>
+                  <p id="stat-provider">Ollama</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="recent-section">
+              <h2>Recent Activity</h2>
+              <div class="filters">
+                <button class="filter-btn active">All</button>
+                <button class="filter-btn">PDFs</button>
+                <button class="filter-btn">Drafts</button>
+              </div>
+              <div class="recent-grid" id="recent-grid">
+                <!-- Cards populated by JS -->
+                <div class="loading-pulse">Loading recent proposals...</div>
+              </div>
+            </div>
+          </section>
+
+          <!-- View: Generate -->
+          <section id="view-generate" class="view hidden">
+            <div class="view-header">
+              <h2>Create New Proposal</h2>
+              <p>
+                Fill out the fields or use the Magic Prompt to draft
+                automatically.
+              </p>
+            </div>
+
+            <div class="generate-layout">
+              <form id="proposal-form" class="glass-panel form-panel">
+                <div class="form-group row">
+                  <div class="col">
+                    <label for="project_title">Project Title</label>
+                    <input
+                      type="text"
+                      id="project_title"
+                      name="project_title"
+                      required
+                      placeholder="e.g. ERP Cloud Migration"
+                    />
+                  </div>
+                  <div class="col">
+                    <label for="client_name">Client / Company Name</label>
+                    <input
+                      type="text"
+                      id="client_name"
+                      name="client_name"
+                      placeholder="e.g. Acme Corporation"
+                    />
+                  </div>
+                </div>
+
+                <div class="form-group row">
+                  <div class="col">
+                    <label for="industry">Industry</label>
+                    <input
+                      type="text"
+                      id="industry"
+                      name="industry"
+                      required
+                      placeholder="e.g. Healthcare, Finance"
+                    />
+                  </div>
+                  <div class="col">
+                    <label for="expected_users">Expected End Users</label>
+                    <input
+                      type="number"
+                      id="expected_users"
+                      name="expected_users"
+                      required
+                      min="10"
+                      placeholder="e.g. 5000"
+                    />
+                  </div>
+                  <div class="col">
+                    <label for="duration_months">Duration (Months)</label>
+                    <input
+                      type="number"
+                      id="duration_months"
+                      name="duration_months"
+                      required
+                      min="1"
+                      max="60"
+                      placeholder="e.g. 6"
+                    />
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label for="tech_stack">Tech Stack (Comma separated)</label>
+                  <input
+                    type="text"
+                    id="tech_stack"
+                    name="tech_stack"
+                    required
+                    placeholder="e.g. AWS, React, Python, PostgreSQL"
+                  />
+                </div>
+
+                <div class="form-actions">
+                  <button
+                    type="button"
+                    class="btn btn-secondary"
+                    id="btn-draft"
+                  >
+                    Preview Draft (JSON)
+                  </button>
+                  <button
+                    type="submit"
+                    class="btn btn-primary"
+                    id="btn-generate-pdf"
+                  >
+                    Generate PDF Proposal
+                  </button>
+                </div>
+              </form>
+
+              <div class="preview-panel glass-panel" id="preview-panel">
+                <div class="preview-empty">
+                  <i class="fa-solid fa-file-lines fa-3x text-muted"></i>
+                  <p>Generated draft will appear here</p>
+                </div>
+                <div class="preview-content hidden" id="preview-content">
+                  <!-- Populated by JS -->
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- View: History -->
+          <section id="view-history" class="view hidden">
+            <div class="view-header">
+              <h2>Proposal History</h2>
+              <button class="btn btn-sm btn-outline" id="btn-refresh-history">
+                <i class="fa-solid fa-rotate-right"></i> Refresh
+              </button>
+            </div>
+            <div class="history-list glass-panel" id="history-container">
+              <div class="loading-pulse">Loading history...</div>
+            </div>
+          </section>
+
+          <!-- View: Settings -->
+          <section id="view-settings" class="view hidden">
+            <div class="view-header">
+              <h2>API Settings</h2>
+              <p>
+                Configure which LLM provider to use.
+                <strong>Ollama is prioritized by default.</strong>
+              </p>
+            </div>
+
+            <div class="settings-panel glass-panel">
+              <form id="settings-form">
+                <div class="form-group">
+                  <label for="provider">AI Provider</label>
+                  <div class="provider-cards">
+                    <label class="provider-card">
+                      <input
+                        type="radio"
+                        name="provider"
+                        value="ollama"
+                        checked
+                      />
+                      <div class="provider-content">
+                        <i class="fa-solid fa-server"></i>
+                        <h4>Ollama (Local)</h4>
+                        <span class="badge primary">Default</span>
+                      </div>
+                    </label>
+                    <label class="provider-card">
+                      <input type="radio" name="provider" value="groq" />
+                      <div class="provider-content">
+                        <i class="fa-solid fa-bolt"></i>
+                        <h4>Groq</h4>
+                      </div>
+                    </label>
+                    <label class="provider-card">
+                      <input type="radio" name="provider" value="openai" />
+                      <div class="provider-content">
+                        <i class="fa-solid fa-brain"></i>
+                        <h4>OpenAI</h4>
+                      </div>
+                    </label>
+                  </div>
+                </div>
+
+                <div class="conditional-settings" id="settings-ollama">
+                  <div class="form-group row">
+                    <div class="col">
+                      <label for="ollama_url">Ollama Base URL</label>
+                      <input
+                        type="url"
+                        id="ollama_url"
+                        name="ollama_url"
+                        placeholder="http://localhost:11434"
+                        value="http://localhost:11434"
+                      />
+                      <small
+                        >Must be running locally or externally
+                        accessible.</small
+                      >
+                    </div>
+                    <div class="col">
+                      <label for="ollama_model">Model Name (Optional)</label>
+                      <input
+                        type="text"
+                        id="ollama_model"
+                        name="ollama_model"
+                        placeholder="e.g. llama3"
+                      />
+                      <small>Leave blank to auto-detect running model.</small>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="conditional-settings hidden" id="settings-external">
+                  <div class="form-group">
+                    <label for="api_key">API Key</label>
+                    <input
+                      type="password"
+                      id="api_key"
+                      name="api_key"
+                      placeholder="Enter your API key here (sk-...)"
+                    />
+                    <small class="text-warning"
+                      ><i class="fa-solid fa-triangle-exclamation"></i> Required
+                      for Groq or OpenAI</small
+                    >
+                  </div>
+                  <div class="form-group row">
+                    <div class="col">
+                      <label for="ext_model">Model Name</label>
+                      <input
+                        type="text"
+                        id="ext_model"
+                        name="ext_model"
+                        placeholder="e.g. llama-3.1-8b-instant or gpt-4o-mini"
+                      />
+                    </div>
+                    <div class="col">
+                      <label for="ext_url"
+                        >Custom Endpoint URL (Optional)</label
+                      >
+                      <input
+                        type="url"
+                        id="ext_url"
+                        name="ext_url"
+                        placeholder="Default used if empty"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  class="btn btn-primary"
+                  id="btn-save-settings"
+                >
+                  Save Settings
+                </button>
+              </form>
+            </div>
+          </section>
+        </div>
+      </main>
+    </div>
+
+    <!-- Overlay Loader -->
+    <div class="fullscreen-loader hidden" id="loader">
+      <div class="loader-content">
+        <div class="spinner"></div>
+        <h3 id="loader-text">Generating...</h3>
+        <p>Combining structural constraints with generative AI.</p>
+      </div>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <script src="/static/js/api.js"></script>
+    <script src="/static/js/app.js"></script>
+  </body>
+</html>

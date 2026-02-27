@@ -32,6 +32,20 @@ class ProposalRequest(BaseModel):
         None, max_length=200,
         description="Optional client / company name for the proposal",
     )
+    
+    # ---- Provider Overrides ----
+    provider: Optional[str] = Field(
+        "ollama", description="Provider logic to use (ollama, groq, openai)"
+    )
+    model: Optional[str] = Field(
+        None, description="Model to use (if None, auto-detect or use default)"
+    )
+    api_key: Optional[str] = Field(
+        None, description="API key to use for external providers"
+    )
+    api_url: Optional[str] = Field(
+        None, description="Custom API URL / endpoint"
+    )
 
     @field_validator("project_title", "industry")
     @classmethod

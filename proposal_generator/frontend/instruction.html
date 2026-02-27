@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Instructions - AI Proposal Generator</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --bg: #0f172a; --text: #f8fafc; --accent: #8b5cf6; --glass: rgba(255, 255, 255, 0.05);
+            --border: rgba(255, 255, 255, 0.1); --panel-bg: rgba(15, 23, 42, 0.7);
+        }
+        body {
+            font-family: 'Inter', sans-serif; background-color: var(--bg); color: var(--text);
+            margin: 0; padding: 0; line-height: 1.6;
+            background-image: radial-gradient(circle at top right, #3b0764, transparent 40%),
+                              radial-gradient(circle at bottom left, #064e3b, transparent 40%);
+            background-attachment: fixed; min-height: 100vh;
+        }
+        .container { max-width: 900px; margin: 0 auto; padding: 40px 20px; }
+        .glass-card {
+            background: var(--glass); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--border); border-radius: 16px; padding: 32px; margin-bottom: 24px;
+        }
+        h1, h2 { font-family: 'Outfit', sans-serif; color: #fff; margin-top: 0; }
+        h1 { font-size: 2.5rem; text-align: center; margin-bottom: 8px; }
+        .subtitle { text-align: center; color: #94a3b8; margin-bottom: 40px; }
+        h2 { font-size: 1.5rem; border-bottom: 1px solid var(--border); padding-bottom: 12px; margin-top: 24px; }
+        code { background: rgba(0,0,0,0.5); padding: 4px 8px; border-radius: 4px; font-family: monospace; color: #a78bfa; }
+        pre { background: rgba(0,0,0,0.5); padding: 16px; border-radius: 8px; overflow-x: auto; color: #a78bfa; border: 1px solid var(--border); }
+        .step { display: flex; margin-bottom: 16px; }
+        .step-num { 
+            background: var(--accent); color: white; width: 32px; height: 32px; 
+            border-radius: 50%; display: flex; align-items: center; justify-content: center; 
+            font-weight: bold; margin-right: 16px; flex-shrink: 0; 
+        }
+        .btn {
+            display: inline-block; background: var(--accent); color: white; text-decoration: none;
+            padding: 10px 20px; border-radius: 8px; font-weight: 500; font-family: 'Outfit', sans-serif;
+            transition: all 0.2s; border: none; cursor: pointer;
+        }
+        .btn:hover { background: #7c3aed; transform: translateY(-1px); }
+        .nav-back { display: inline-flex; align-items: center; gap: 8px; color: #94a3b8; text-decoration: none; margin-bottom: 24px; font-weight: 500; }
+        .nav-back:hover { color: #fff; }
+        ul { padding-left: 20px; }
+        li { margin-bottom: 8px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="/" class="nav-back"><i class="fa-solid fa-arrow-left"></i> Back to Dashboard</a>
+        
+        <h1>How to Use ProposeAI</h1>
+        <div class="subtitle">Complete setup and usage instructions</div>
+
+        <div class="glass-card">
+            <h2>Welcome to ProposeAI</h2>
+            <p>ProposeAI combines <strong>Generative AI</strong> (for writing summaries and approaches) with <strong>Deterministic Logic</strong> (for strict math regarding costs, timelines, and team compositions) to create robust, hallucination-free project proposals.</p>
+            <p>By default, this system connects to a local <strong>Ollama</strong> instance for maximum privacy and zero cost. You can also securely use external APIs (Groq, OpenAI) for faster/larger models.</p>
+        </div>
+
+        <div class="glass-card">
+            <h2>Setting Up Ollama (Primary / Default)</h2>
+            <p>Ollama allows you to run large language models locally on your machine. We highly recommend this to prevent sending proprietary client data to external providers.</p>
+            
+            <div class="step">
+                <div class="step-num">1</div>
+                <div>
+                    <strong>Install Ollama</strong><br>
+                    Download and install Ollama from <a href="https://ollama.com" target="_blank" style="color:#a78bfa">ollama.com</a>.
+                </div>
+            </div>
+            
+            <div class="step">
+                <div class="step-num">2</div>
+                <div>
+                    <strong>Download a Model</strong><br>
+                    Open your terminal or command prompt and run:<br>
+                    <code>ollama run llama3</code> or <code>ollama run mistral</code><br>
+                    Wait for the download to finish. It will start the server automatically on <code>http://localhost:11434</code>.
+                </div>
+            </div>
+            
+            <div class="step">
+                <div class="step-num">3</div>
+                <div>
+                    <strong>Keep it running</strong><br>
+                    As long as the Ollama app/service is running, this web application will automatically detect the active model and connect to it. No API keys are needed!
+                </div>
+            </div>
+        </div>
+
+        <div class="glass-card">
+            <h2>Using External APIs (Optional)</h2>
+            <p>If you prefer to use cloud providers like Groq or OpenAI for faster generation or specific models, you can easily configure them directly in the UI.</p>
+            
+            <ul>
+                <li><strong>Safe Configuration:</strong> API keys entered in the UI are kept purely in your browser's local storage and sent directly to the backend ONLY when generating a proposal. They are never logged or stored on the server.</li>
+                <li><strong>How to apply:</strong> Go to the <strong>Settings</strong> tab in the sidebar layout. Select Groq or OpenAI, enter your API Key, and save.</li>
+            </ul>
+        </div>
+
+        <div class="glass-card">
+            <h2>Features & Workflows</h2>
+            
+            <h3>1. The "Magic Generate" Bar</h3>
+            <p>At the top of the dashboard, you can type a natural language prompt like <code>"Generate a proposal for Acme Inc.'s cloud migration in AWS taking 6 months for 5000 users"</code>. The AI will parse this and pre-fill the form for you.</p>
+
+            <h3>2. PDF & Draft Generation</h3>
+            <ul>
+                <li><strong>Preview Draft (JSON):</strong> Returns the raw structured data so you can verify the LLM output without generating a document.</li>
+                <li><strong>Generate PDF:</strong> Generates the intelligent text, calculates deterministic costs (no hallucinations!), forms the team structure, builds charts using matplotlib, and creates a polished PDF download.</li>
+            </ul>
+
+            <h3>3. Cost Logic Architecture</h3>
+            <p>Cost and timelines are calculated via strict math formulas in <code>app/cost_logic.py</code> based on the `duration_months` and `expected_users` variables. The LLM is <strong>instructed explicitly to not hallucinate financial numbers</strong>. The backend intercepts the LLM's timeline and forces its weeks to strictly sum to your requested duration.</p>
+            
+            <div style="margin-top: 24px; text-align:center;">
+                <a href="/" class="btn"><i class="fa-solid fa-play"></i> Launch Dashboard</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
