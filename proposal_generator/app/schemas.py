@@ -157,3 +157,23 @@ class EditProposalRequest(BaseModel):
         # Basic injection guard
         v = re.sub(r"(?i)(ignore|forget|disregard)\s+(all|previous|prior|above)\s*(instructions?|rules?|context)", "[REDACTED]", v)
         return v
+
+
+class PdfFromSectionsRequest(BaseModel):
+    """Build a PDF from pre-computed AI sections without re-running the LLM."""
+
+    project_title: str = Field(..., min_length=3, max_length=200)
+    client_name: Optional[str] = Field(None, max_length=150)
+    industry: str = Field(..., min_length=2, max_length=100)
+    duration_months: int = Field(..., ge=1, le=60)
+    expected_users: int = Field(..., ge=1)
+    tech_stack: List[str] = Field(default_factory=list)
+
+    # Pre-computed AI sections (passed directly — no LLM call needed)
+    sections: Dict[str, Any] = Field(
+        ..., description="Pre-built proposal sections from a prior /generate-proposal call"
+    )
+
+    device_id: Optional[str] = Field(None, max_length=128)
+    provider: Optional[str] = Field("ollama")
+    model: Optional[str] = Field(None)

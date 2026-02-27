@@ -63,6 +63,7 @@
         <p id="sb-model" class="text-xs text-gray-500 truncate">&mdash;</p>
       </div>
       <div class="mt-2 px-1">
+        <p class="text-[11px] text-brand-600 font-semibold truncate" id="sb-user"></p>
         <p class="text-[9px] text-gray-300 truncate" id="sb-device">Device: &hellip;</p>
       </div>
     </div>
@@ -209,6 +210,27 @@
             <pre id="prev-json" class="hidden flex-1 bg-gray-900 text-emerald-300 rounded-xl p-4 text-xs overflow-auto whitespace-pre-wrap leading-relaxed font-mono"></pre>
           </div>
         </div>
+
+        <!-- ══ ITERATE / EDIT PANEL (shown after PDF generated) ══ -->
+        <div id="iterate-panel" class="hidden mt-6 bg-white rounded-2xl border border-brand-200 shadow-sm p-5 fade-in">
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="text-base font-bold text-brand-700 flex items-center gap-2"><i data-lucide="pencil-line" class="w-4 h-4"></i> Iterate / Edit Proposal</h3>
+            <div class="flex items-center gap-2">
+              <button onclick="viewLastJSON()" class="btn-outline text-xs py-1.5 px-3"><i data-lucide="braces" class="w-3.5 h-3.5"></i> View JSON</button>
+              <button onclick="$('iterate-panel').classList.add('hidden')" class="text-gray-400 hover:text-red-400 transition text-sm">&times;</button>
+            </div>
+          </div>
+          <p class="text-xs text-gray-500 mb-3">The AI retains full context of your proposal. Describe what to change, add, or remove.</p>
+          <textarea id="edit-instruction" rows="3" class="inp resize-none mb-3" placeholder="e.g. Remove the Gantt timeline visual, add a compliance section for HIPAA, make the executive summary shorter (2 sentences)"></textarea>
+          <div class="flex flex-wrap gap-2">
+            <button onclick="submitEdit()" class="btn-primary"><i data-lucide="wand-2" class="w-3.5 h-3.5"></i> Apply Edit &amp; Regenerate JSON</button>
+            <button onclick="submitEditAndPDF()" class="btn-outline"><i data-lucide="file-down" class="w-3.5 h-3.5"></i> Apply &amp; Download New PDF</button>
+          </div>
+          <div id="edit-result" class="hidden mt-4 bg-gray-50 rounded-xl p-4 border border-gray-200">
+            <p class="text-xs font-bold text-gray-600 mb-2">Updated Sections Preview:</p>
+            <pre id="edit-json-preview" class="text-xs text-emerald-800 font-mono whitespace-pre-wrap leading-relaxed max-h-56 overflow-auto"></pre>
+          </div>
+        </div>
       </section>
 
       <!-- ══ HISTORY ══ -->
@@ -353,6 +375,20 @@
   </div>
 </div>
 
+<!-- ══ USER REGISTRATION MODAL ══ -->
+<div id="user-reg-modal" class="hidden fixed inset-0 z-[60] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-7 modal-enter">
+    <div class="flex items-center gap-3 mb-4">
+      <div class="w-10 h-10 rounded-xl bg-brand-600 flex items-center justify-center shadow-md shadow-brand-200"><i data-lucide="user-plus" class="w-5 h-5 text-white"></i></div>
+      <div><p class="text-lg font-extrabold text-gray-900">Welcome to ProposalAI</p><p class="text-xs text-gray-400">New device detected</p></div>
+    </div>
+    <p class="text-sm text-gray-600 mb-4">Enter your name to personalise proposals and track your session.</p>
+    <input id="reg-name" type="text" maxlength="80" placeholder="Your name (e.g. Aditya)" class="inp mb-3" oninput="$('reg-save-btn').disabled = !this.value.trim()">
+    <button id="reg-save-btn" onclick="submitUserReg()" disabled class="btn-primary w-full justify-center py-2.5"><i data-lucide="check" class="w-4 h-4"></i> Save &amp; Continue</button>
+    <button onclick="skipUserReg()" class="mt-2 w-full text-center text-xs text-gray-400 hover:text-gray-600 transition py-1">Skip for now</button>
+  </div>
+</div>
+
 <!-- ══ LOADER OVERLAY ══ -->
 <div id="loader" class="hidden fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center">
   <div class="bg-white rounded-2xl p-8 text-center shadow-2xl max-w-xs mx-4 modal-enter">
@@ -385,6 +421,20 @@
   <iframe id="pdf-frame" src="about:blank" class="flex-1 w-full border-0" allow="fullscreen"></iframe>
 </div>
 
+<!-- ══ JSON VIEWER MODAL ══ -->
+<div id="json-modal" class="hidden fixed inset-0 z-[55] bg-black/70 backdrop-blur-sm flex flex-col items-center justify-center p-4">
+  <div class="bg-gray-900 rounded-2xl shadow-2xl w-full max-w-3xl max-h-[85vh] flex flex-col modal-enter">
+    <div class="flex items-center justify-between px-5 py-3 border-b border-gray-700 shrink-0">
+      <div class="flex items-center gap-2"><i data-lucide="braces" class="w-4 h-4 text-emerald-400"></i><span id="json-modal-title" class="text-white font-semibold text-sm">Proposal JSON</span></div>
+      <div class="flex items-center gap-2">
+        <button onclick="copyJSON()" class="flex items-center gap-1.5 text-xs font-semibold text-gray-300 hover:text-white bg-gray-800 hover:bg-gray-700 px-3 py-1.5 rounded-lg transition"><i data-lucide="copy" class="w-3.5 h-3.5"></i> Copy</button>
+        <button onclick="closeJSONModal()" class="p-2 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+    </div>
+    <pre id="json-modal-body" class="flex-1 overflow-auto p-5 text-xs text-emerald-300 font-mono whitespace-pre-wrap leading-relaxed"></pre>
+  </div>
+</div>
+
 <!-- ══ TOAST BOX ══ -->
 <!-- ══ BACKGROUND JOB TRAY ══ -->
 <div id="bg-job-tray" class="fixed bottom-28 right-4 z-50 space-y-2 w-72"></div>
@@ -409,6 +459,11 @@
    STATE
 ═══════════════════════════════════════════════════════════ */
 const API = location.origin;
+
+/* Last generated proposal context — used for iterate/edit */
+var _lastSections = null;          // AI-generated sections from most recent PDF/JSON
+var _lastProposalPayload = null;   // form payload used to generate it
+var _lastProposalId = null;        // DB proposal ID from X-Proposal-Id header
 
 /* Simple TTL cache for expensive remote calls */
 var _cache = {};
@@ -549,7 +604,6 @@ function _bgRender() {
 function ensureDeviceId() {
   var stored = localStorage.getItem('pai_device_id');
   if (!stored || stored.length < 10) {
-    /* Generate a stable UUID-like device identifier */
     stored = 'dev-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10) + '-' + Math.random().toString(36).slice(2, 10);
     localStorage.setItem('pai_device_id', stored);
   }
@@ -560,8 +614,58 @@ function ensureDeviceId() {
 async function registerDevice() {
   if (!cfg.device_id) return;
   try {
-    await fetch(API + '/session/register?device_id=' + encodeURIComponent(cfg.device_id), { method: 'POST' });
+    var userName = localStorage.getItem('pai_user_name') || '';
+    var r = await fetch(API + '/session/register?device_id=' + encodeURIComponent(cfg.device_id) + '&user_name=' + encodeURIComponent(userName), { method: 'POST' });
+    if (r.ok) {
+      var d = await r.json();
+      /* Store device token in sessionStorage — cleared on tab close for security */
+      if (d.device_token) sessionStorage.setItem('pai_device_token', d.device_token);
+    }
   } catch (e) { /* non-fatal */ }
+}
+
+function _deviceHeaders() {
+  var token = sessionStorage.getItem('pai_device_token') || '';
+  return token ? { 'X-Device-Token': token } : {};
+}
+
+/* ═══════════════════════════════════════════════════════════
+   USER REGISTRATION
+═══════════════════════════════════════════════════════════ */
+function ensureUserName() {
+  var stored = localStorage.getItem('pai_user_name');
+  if (stored) {
+    _applyUserName(stored);
+  } else {
+    /* Show registration modal on first visit */
+    $('user-reg-modal').classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+    setTimeout(function() { if ($('reg-name')) $('reg-name').focus(); }, 200);
+  }
+}
+
+function _applyUserName(name) {
+  if ($('sb-user')) {
+    $('sb-user').textContent = name ? 'Hi, ' + name + ' \uD83D\uDC4B' : '';
+  }
+}
+
+function submitUserReg() {
+  var name = ($('reg-name').value || '').trim();
+  if (!name) { toast('Please enter your name', 'error'); return; }
+  localStorage.setItem('pai_user_name', name);
+  _applyUserName(name);
+  $('user-reg-modal').classList.add('hidden');
+  document.body.style.overflow = '';
+  lucide.createIcons();
+  toast('Welcome, ' + name + '! Your name has been saved.', 'success');
+  /* Re-register device with name */
+  registerDevice();
+}
+
+function skipUserReg() {
+  $('user-reg-modal').classList.add('hidden');
+  document.body.style.overflow = '';
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -852,7 +956,7 @@ async function updateStatusBar() {
 async function loadHistory() {
   try {
     /* Primary: load from device session (SQLite) */
-    var r = await fetch(API + '/session/' + encodeURIComponent(cfg.device_id) + '/proposals');
+    var r = await fetch(API + '/session/' + encodeURIComponent(cfg.device_id) + '/proposals', { headers: _deviceHeaders() });
     if (!r.ok) throw new Error('session 404');
     var d = await r.json();
     $('d-total').textContent = d.proposals.length;
@@ -886,6 +990,24 @@ function renderList(items, containerId, limit) {
     var title = p.project_title || p.filename || 'Proposal';
     var industry = p.industry ? '<span class="bg-brand-50 text-brand-700 px-1.5 py-0.5 rounded text-[10px] font-semibold">' + p.industry + '</span>' : '';
     var provider = p.provider ? '<span class="bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded text-[10px]">' + p.provider + (p.model ? ':' + p.model.split(':')[0] : '') + '</span>' : '';
+    /* View JSON button — parse sections_json if available */
+    var jsonBtn = '';
+    if (p.sections_json) {
+      var safeId = ('item_' + Math.random().toString(36).slice(2)).replace(/[^a-zA-Z0-9_]/g, '');
+      /* Store in window namespace for the onclick callback */
+      try { window['__sj_' + safeId] = JSON.parse(p.sections_json); } catch(_) { window['__sj_' + safeId] = null; }
+      if (window['__sj_' + safeId]) {
+        var safeTitle = title.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+        jsonBtn = '<button onclick="openJSONModal(window[\'__sj_' + safeId + '\'],\'' + safeTitle + '\')" class="flex items-center gap-1.5 text-xs font-semibold text-gray-600 border border-gray-200 rounded-lg px-3 py-1.5 hover:bg-emerald-50 hover:text-emerald-600 hover:border-emerald-300 transition"><i data-lucide="braces" class="w-3.5 h-3.5"></i> JSON</button>';
+      }
+    }
+    /* Edit/Iterate button */
+    var editBtn = '';
+    if (p.sections_json) {
+      var safeIdE = ('itm_' + Math.random().toString(36).slice(2)).replace(/[^a-zA-Z0-9_]/g, '');
+      try { window['__se_' + safeIdE] = { sections: JSON.parse(p.sections_json), payload: p }; } catch(_) {}
+      editBtn = '<button onclick="_loadHistoryItemForEdit(window[\'__se_' + safeIdE + '\'])" class="flex items-center gap-1.5 text-xs font-semibold text-gray-600 border border-gray-200 rounded-lg px-3 py-1.5 hover:bg-brand-50 hover:text-brand-600 hover:border-brand-300 transition"><i data-lucide="pencil-line" class="w-3.5 h-3.5"></i> Edit</button>';
+    }
     return '<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-4 sm:px-5 py-4 border-b border-gray-100 last:border-0 hover:bg-gray-50 transition-colors">' +
       '<div class="flex items-center gap-3 min-w-0">' +
         '<div class="w-10 h-10 rounded-xl bg-red-50 text-red-500 flex items-center justify-center shrink-0"><i data-lucide="file-text" class="w-5 h-5"></i></div>' +
@@ -899,6 +1021,8 @@ function renderList(items, containerId, limit) {
           '<button onclick="openPDF(\'' + (p.view_url || p.download_url + '?inline=true') + '\', \'' + title.replace(/'/g, "\\'") + '\')" class="flex items-center gap-1.5 text-xs font-semibold text-gray-600 border border-gray-200 rounded-lg px-3 py-1.5 hover:bg-brand-50 hover:text-brand-600 hover:border-brand-300 transition">' +
             '<i data-lucide="eye" class="w-3.5 h-3.5"></i> View' +
           '</button>' : '') +
+        jsonBtn +
+        editBtn +
         (p.download_url || p.view_url ?
           '<a href="' + (p.download_url || p.view_url) + '" download class="flex items-center gap-1.5 text-xs font-semibold text-gray-600 border border-gray-200 rounded-lg px-3 py-1.5 hover:bg-emerald-50 hover:text-emerald-600 hover:border-emerald-300 transition">' +
             '<i data-lucide="download" class="w-3.5 h-3.5"></i> Download' +
@@ -907,6 +1031,36 @@ function renderList(items, containerId, limit) {
     '</div>';
   }).join('');
   lucide.createIcons();
+}
+
+function _loadHistoryItemForEdit(ctx) {
+  if (!ctx || !ctx.sections) { toast('No sections data for this proposal.', 'info'); return; }
+  _lastSections = ctx.sections;
+  _lastProposalPayload = {
+    project_title: ctx.payload.project_title || '',
+    industry: ctx.payload.industry || '',
+    duration_months: ctx.payload.duration_months || 6,
+    expected_users: ctx.payload.expected_users || 100,
+    tech_stack: [],
+    client_name: ctx.payload.client_name || '',
+    custom_notes: null,
+    provider: cfg.provider,
+    model: cfg.provider === 'ollama' ? (cfg.model || null) : (cfg.ext_model || null),
+    api_key: cfg.api_key || null,
+    api_url: cfg.provider === 'ollama' ? (cfg.api_url || null) : (cfg.ext_url || null),
+    device_id: cfg.device_id || null
+  };
+  /* Prefill form */
+  if ($('f-title')) $('f-title').value = ctx.payload.project_title || '';
+  if ($('f-industry')) $('f-industry').value = ctx.payload.industry || '';
+  if ($('f-months')) $('f-months').value = ctx.payload.duration_months || 6;
+  if ($('f-users')) $('f-users').value = ctx.payload.expected_users || 100;
+  /* Show generate page with iterate panel open */
+  nav('generate');
+  $('iterate-panel').classList.remove('hidden');
+  $('edit-result').classList.add('hidden');
+  if ($('edit-instruction')) $('edit-instruction').value = '';
+  toast('Proposal loaded for editing. Describe your changes in the iterate panel.', 'info');
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -969,12 +1123,158 @@ function payload() {
     expected_users:  parseInt($('f-users').value)  || 100,
     tech_stack:      $('f-stack').value.split(',').map(function(s) { return s.trim(); }).filter(Boolean),
     custom_notes:    ($('f-notes').value || '').trim() || null,
+    user_name:       localStorage.getItem('pai_user_name') || null,
     provider:        cfg.provider,
     model:           cfg.provider === 'ollama' ? (cfg.model || null) : (cfg.ext_model || null),
     api_key:         cfg.api_key  || null,
     api_url:         cfg.provider === 'ollama' ? (cfg.api_url || null) : (cfg.ext_url || null),
     device_id:       cfg.device_id || null
   };
+}
+
+/* ═══════════════════════════════════════════════════════════
+   JSON VIEWER MODAL
+═══════════════════════════════════════════════════════════ */
+function openJSONModal(sectionsObj, title) {
+  $('json-modal-title').textContent = (title || 'Proposal') + ' — JSON Sections';
+  $('json-modal-body').textContent = JSON.stringify(sectionsObj, null, 2);
+  $('json-modal').classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
+  lucide.createIcons();
+}
+
+function closeJSONModal() {
+  $('json-modal').classList.add('hidden');
+  document.body.style.overflow = '';
+}
+
+function copyJSON() {
+  var text = $('json-modal-body').textContent;
+  navigator.clipboard.writeText(text).then(function() {
+    toast('JSON copied to clipboard!', 'success');
+  }).catch(function() {
+    toast('Copy failed — select text manually.', 'error');
+  });
+}
+
+function viewLastJSON() {
+  if (!_lastSections) { toast('No proposal sections available yet. Generate a proposal first.', 'info'); return; }
+  openJSONModal(_lastSections, _lastProposalPayload ? _lastProposalPayload.project_title : 'Proposal');
+}
+
+/* Close JSON modal on Escape (alongside existing PDF modal handler) */
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    if (!$('json-modal').classList.contains('hidden')) { closeJSONModal(); e.stopPropagation(); }
+  }
+}, true);
+
+/* ═══════════════════════════════════════════════════════════
+   EDIT / ITERATE
+═══════════════════════════════════════════════════════════ */
+function _editPayload() {
+  var p = _lastProposalPayload || payload();
+  return {
+    project_title:    p.project_title,
+    industry:         p.industry,
+    duration_months:  p.duration_months,
+    expected_users:   p.expected_users,
+    tech_stack:       p.tech_stack,
+    client_name:      p.client_name || '',
+    current_sections: _lastSections || {},
+    edit_instruction: ($('edit-instruction').value || '').trim(),
+    provider:         cfg.provider,
+    model:            cfg.provider === 'ollama' ? (cfg.model || null) : (cfg.ext_model || null),
+    api_key:          cfg.api_key || null,
+    api_url:          cfg.provider === 'ollama' ? (cfg.api_url || null) : (cfg.ext_url || null),
+    device_id:        cfg.device_id || null
+  };
+}
+
+async function submitEdit() {
+  var instr = ($('edit-instruction').value || '').trim();
+  if (!instr) { toast('Enter an edit instruction', 'error'); return; }
+  if (!_lastSections) { toast('Generate a proposal first, then edit it here.', 'info'); return; }
+  loader(true, 'Applying edits\u2026', 'AI is updating your proposal with context awareness.');
+  try {
+    var r = await fetch(API + '/edit-proposal', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(_editPayload())
+    });
+    if (!r.ok) { var e = await r.text(); throw new Error(e); }
+    var d = await r.json();
+    /* Update context with the new sections */
+    _lastSections = {
+      executive_summary: d.executive_summary,
+      technical_approach: d.technical_approach,
+      timeline: d.timeline,
+      risk_assessment: d.risk_assessment,
+      deliverables: d.deliverables
+    };
+    $('edit-result').classList.remove('hidden');
+    $('edit-json-preview').textContent = JSON.stringify(_lastSections, null, 2);
+    /* Also update the preview panel */
+    $('prev-empty').classList.add('hidden');
+    $('prev-json').classList.remove('hidden');
+    $('prev-json').textContent = JSON.stringify(d, null, 2);
+    toast('Proposal updated! Review below or download a new PDF.', 'success');
+  } catch (err) {
+    toast(err.message || 'Edit failed', 'error');
+  }
+  loader(false);
+}
+
+async function submitEditAndPDF() {
+  var instr = ($('edit-instruction').value || '').trim();
+  if (!instr) { toast('Enter an edit instruction', 'error'); return; }
+  if (!_lastSections) { toast('Generate a proposal first.', 'info'); return; }
+  loader(true, 'Editing &amp; generating new PDF\u2026', 'Applying edits then building PDF (no double LLM call).', true);
+  try {
+    /* Step 1: edit — get updated sections */
+    var r1 = await fetch(API + '/edit-proposal', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(_editPayload())
+    });
+    if (!r1.ok) throw new Error(await r1.text());
+    var d = await r1.json();
+    _lastSections = { executive_summary: d.executive_summary, technical_approach: d.technical_approach, timeline: d.timeline, risk_assessment: d.risk_assessment, deliverables: d.deliverables };
+    /* Step 2: build PDF using pre-computed sections — NO second LLM call */
+    var p = _lastProposalPayload || payload();
+    var pdfSectionsPayload = {
+      project_title:   p.project_title,
+      client_name:     p.client_name || '',
+      industry:        p.industry,
+      duration_months: p.duration_months,
+      expected_users:  p.expected_users,
+      tech_stack:      p.tech_stack || [],
+      sections:        _lastSections,
+      device_id:       cfg.device_id || null,
+      provider:        cfg.provider,
+      model:           cfg.provider === 'ollama' ? (cfg.model || null) : (cfg.ext_model || null)
+    };
+    var r2 = await fetch(API + '/generate-pdf-from-sections', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(pdfSectionsPayload)
+    });
+    if (!r2.ok) throw new Error(await r2.text());
+    var blob = await r2.blob();
+    var blobUrl = URL.createObjectURL(blob);
+    var title = (p.project_title || 'Proposal').slice(0, 60);
+    var dlName = title.replace(/[ /\\]/g, '_') + '_Edited.pdf';
+    if (_bgMode && _bgJobId !== null) {
+      _bgDone(_bgJobId, blobUrl, dlName, title + ' (Edited)');
+    } else {
+      loader(false);
+      var a = document.createElement('a'); a.href = blobUrl; a.download = dlName;
+      document.body.appendChild(a); a.click(); a.remove();
+      openPDF(blobUrl, title + ' (Edited)');
+      toast('Edited PDF generated!', 'success');
+    }
+    await loadHistory();
+  } catch (err) {
+    loader(false);
+    toast(err.message || 'Edit + PDF failed', 'error');
+  }
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -985,16 +1285,23 @@ async function genJSON() {
   if (!form.checkValidity()) { form.reportValidity(); return; }
   loader(true, 'Generating draft\u2026', 'AI is building your proposal structure.');
   try {
+    var p = payload();
     var r = await fetch(API + '/generate-proposal', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload())
+      body: JSON.stringify(p)
     });
     if (!r.ok) { var e = await r.text(); throw new Error(e); }
     var d = await r.json();
+    /* Store context */
+    _lastProposalPayload = p;
+    _lastSections = { executive_summary: d.executive_summary, technical_approach: d.technical_approach, timeline: d.timeline, risk_assessment: d.risk_assessment, deliverables: d.deliverables };
     $('prev-empty').classList.add('hidden');
     $('prev-json').classList.remove('hidden');
     $('prev-json').textContent = JSON.stringify(d, null, 2);
-    toast('Draft generated!', 'success');
+    /* Show iterate panel */
+    $('iterate-panel').classList.remove('hidden');
+    $('edit-result').classList.add('hidden');
+    toast('Draft generated! Use the iterate panel below to refine.', 'success');
   } catch (e) { toast(e.message || 'Generation failed', 'error'); }
   loader(false);
 }
@@ -1015,25 +1322,39 @@ $('prop-form').addEventListener('submit', async function(e) {
       body: JSON.stringify(p)
     });
     if (!r.ok) { var txt = await r.text(); throw new Error(txt); }
+    /* Capture proposal ID and later sections JSON via the JSON endpoint */
+    _lastProposalId = r.headers.get('X-Proposal-Id') || null;
     var blob = await r.blob();
     var blobUrl = URL.createObjectURL(blob);
     var dlName = jobTitle.replace(/[ /\\]/g, '_') + '_Proposal.pdf';
+    /* Fetch the JSON version to get sections for iterate context */
+    try {
+      var r2 = await fetch(API + '/generate-proposal', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(p)
+      });
+      if (r2.ok) {
+        var d2 = await r2.json();
+        _lastProposalPayload = p;
+        _lastSections = { executive_summary: d2.executive_summary, technical_approach: d2.technical_approach, timeline: d2.timeline, risk_assessment: d2.risk_assessment, deliverables: d2.deliverables };
+      }
+    } catch (_) {}
 
     if (_bgMode && _bgJobId !== null) {
-      /* Background mode — update tray notification */
-      _bgDone(_bgJobId, blobUrl, dlName, jobTitle + ' — Proposal');
+      _bgDone(_bgJobId, blobUrl, dlName, jobTitle + ' \u2014 Proposal');
       await loadHistory();
     } else {
-      /* Normal mode — dismiss overlay, auto-download + open viewer */
       loader(false);
       var a = document.createElement('a');
-      a.href = blobUrl;
-      a.download = dlName;
+      a.href = blobUrl; a.download = dlName;
       document.body.appendChild(a); a.click(); a.remove();
-      openPDF(blobUrl, jobTitle + ' — Proposal');
-      toast('PDF generated and downloaded!', 'success');
+      openPDF(blobUrl, jobTitle + ' \u2014 Proposal');
+      /* Show iterate panel */
+      $('iterate-panel').classList.remove('hidden');
+      $('edit-result').classList.add('hidden');
+      toast('PDF generated! Use the iterate panel to refine.', 'success');
       await loadHistory();
-      nav('history');
+      nav('generate');
     }
   } catch (err) {
     if (_bgMode && _bgJobId !== null) {
@@ -1115,6 +1436,7 @@ function magicFill() {
 async function init() {
   loadCfg();
   ensureDeviceId();
+  ensureUserName();
   lucide.createIcons();
   nav('dashboard');
   /* Run independent start-up tasks in parallel */
