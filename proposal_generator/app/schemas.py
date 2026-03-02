@@ -53,6 +53,32 @@ class ProposalRequest(BaseModel):
         description="Additional custom requirements, constraints, or details provided by the user",
     )
 
+    # ---- Enhanced input parameters ----
+    budget_range: Optional[str] = Field(
+        None, max_length=50,
+        description="Budget range e.g. '5L-10L', '10L-25L', '25L-50L', '50L-1Cr', '1Cr+'",
+    )
+    project_priority: Optional[str] = Field(
+        None, max_length=20,
+        description="Priority: low, medium, high, critical",
+    )
+    compliance_requirements: Optional[List[str]] = Field(
+        None, max_length=10,
+        description="Compliance frameworks e.g. ['HIPAA', 'GDPR', 'SOC2']",
+    )
+    deployment_model: Optional[str] = Field(
+        None, max_length=30,
+        description="Deployment model: cloud, on-premise, hybrid",
+    )
+    target_audience: Optional[str] = Field(
+        None, max_length=200,
+        description="Target audience / end-user description",
+    )
+    competitors: Optional[str] = Field(
+        None, max_length=500,
+        description="Key competitors or existing solutions in the space",
+    )
+
     # ---- Session tracking ----
     device_id: Optional[str] = Field(
         None, max_length=128,

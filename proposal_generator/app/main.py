@@ -11,7 +11,7 @@ from urllib.parse import urlparse
 import ipaddress
 
 import requests as http_requests
-from fastapi import FastAPI, BackgroundTasks, Header, HTTPException, Query, Request
+from fastapi import FastAPI, BackgroundTasks, Header, HTTPException, Query, Request, UploadFile, File, Form
 from fastapi.responses import FileResponse, JSONResponse, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -277,6 +277,149 @@ async def ollama_pull_model(model_name: str = Query(..., min_length=1), url: str
         return JSONResponse(status_code=500, content={"success": False, "error": str(e)})
 
 
+# ── File upload: parse PDF / Word / Excel → text ──────────────────────────────
+_MAX_FILES = 3
+_MAX_FILE_SIZE = 15 * 1024 * 1024  # 15 MB
+_ALLOWED_EXTENSIONS = {".pdf", ".doc", ".docx", ".xls", ".xlsx"}
+# TTL-based in-memory cache: device_id → {"docs": [...], "ts": float}
+_uploaded_texts: dict[str, dict] = {}
+_UPLOAD_TTL_SECONDS = 600  # 10 minutes
+
+
+def _cleanup_stale_uploads() -> None:
+    """Remove uploaded context entries older than TTL."""
+    now = time.time()
+    stale = [k for k, v in _uploaded_texts.items() if now - v.get("ts", 0) > _UPLOAD_TTL_SECONDS]
+    for k in stale:
+        _uploaded_texts.pop(k, None)
+
+
+def _extract_pdf(content: bytes) -> str:
+    """Extract text from a PDF file."""
+    import PyPDF2, io
+    reader = PyPDF2.PdfReader(io.BytesIO(content))
+    pages = []
+    for page in reader.pages:
+        t = page.extract_text()
+        if t:
+            pages.append(t.strip())
+    return "\n\n".join(pages)
+
+
+def _extract_docx(content: bytes) -> str:
+    """Extract text from a Word document."""
+    import docx, io
+    doc = docx.Document(io.BytesIO(content))
+    paragraphs = [p.text.strip() for p in doc.paragraphs if p.text.strip()]
+    for table in doc.tables:
+        for row in table.rows:
+            cells = [c.text.strip() for c in row.cells if c.text.strip()]
+            if cells:
+                paragraphs.append(" | ".join(cells))
+    return "\n".join(paragraphs)
+
+
+def _extract_xlsx(content: bytes) -> str:
+    """Extract text from an Excel workbook."""
+    import openpyxl, io
+    wb = openpyxl.load_workbook(io.BytesIO(content), read_only=True, data_only=True)
+    lines = []
+    for ws in wb.worksheets:
+        lines.append(f"[Sheet: {ws.title}]")
+        for row in ws.iter_rows(values_only=True):
+            cells = [str(c) if c is not None else "" for c in row]
+            if any(cells):
+                lines.append(" | ".join(cells))
+    wb.close()
+    return "\n".join(lines)
+
+
+_EXTRACTORS = {
+    ".pdf": _extract_pdf,
+    ".doc": _extract_docx,
+    ".docx": _extract_docx,
+    ".xls": _extract_xlsx,
+    ".xlsx": _extract_xlsx,
+}
+
+
+def _extract_text_from_file(filename: str, content: bytes) -> str:
+    """Extract plain text from an uploaded file using format-specific extractors."""
+    ext = os.path.splitext(filename)[1].lower()
+    extractor = _EXTRACTORS.get(ext)
+    if not extractor:
+        return ""
+    try:
+        return extractor(content)
+    except Exception as e:
+        log.warning("Failed to extract text from %s: %s", filename, e)
+        return f"[Could not parse {filename}: {e}]"
+
+
+@app.post("/upload-files")
+async def upload_files(
+    files: list[UploadFile] = File(...),
+    device_id: str = Form(default=""),
+):
+    """Upload up to 3 reference files (PDF/Word/Excel, max 15 MB each).
+
+    Returns extracted text summaries keyed by filename.
+    """
+    if len(files) > _MAX_FILES:
+        raise HTTPException(status_code=400, detail=f"Maximum {_MAX_FILES} files allowed.")
+
+    # Periodically purge stale uploads
+    _cleanup_stale_uploads()
+
+    results = []
+    for f in files:
+        ext = os.path.splitext(f.filename or "")[1].lower()
+        if ext not in _ALLOWED_EXTENSIONS:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Unsupported file type '{ext}' for '{f.filename}'. Allowed: PDF, Word, Excel.",
+            )
+        content = await f.read()
+        if len(content) > _MAX_FILE_SIZE:
+            raise HTTPException(
+                status_code=400,
+                detail=f"File '{f.filename}' exceeds 15 MB limit ({len(content) / (1024*1024):.1f} MB).",
+            )
+        # Offload CPU-intensive extraction to thread pool
+        text = await asyncio.to_thread(_extract_text_from_file, f.filename or "file", content)
+        # Truncate very long files to keep prompt manageable
+        if len(text) > 12000:
+            text = text[:12000] + "\n... [truncated to 12000 chars]"
+        results.append({"filename": f.filename, "chars": len(text), "preview": text[:500]})
+        # Store for later use in prompt (with TTL timestamp)
+        if device_id:
+            entry = _uploaded_texts.setdefault(device_id, {"docs": [], "ts": time.time()})
+            entry["docs"].append({"filename": f.filename, "text": text})
+            entry["ts"] = time.time()
+
+    return {"uploaded": len(results), "files": results}
+
+
+def get_uploaded_context(device_id: str | None) -> str:
+    """Return combined uploaded file text for a device (non-destructive read).
+
+    Data persists until TTL expires or a new upload replaces it,
+    allowing both Preview and PDF Download to use the same context.
+    """
+    if not device_id or device_id not in _uploaded_texts:
+        return ""
+    entry = _uploaded_texts.get(device_id, {})
+    docs = entry.get("docs", [])
+    if not docs:
+        return ""
+    import secrets as _sec
+    nonce = _sec.token_hex(4).upper()
+    parts = []
+    for d in docs:
+        parts.append(f"<UPLOADED_DOC_{nonce} name=\"{d['filename']}\">\n{d['text']}\n</UPLOADED_DOC_{nonce}>")
+    return "\n\n".join(parts)
+
+
 @app.post("/generate-proposal", response_model=ProposalResponse)
 def generate(data: ProposalRequest, background_tasks: BackgroundTasks):
     """Generate a structured consulting proposal (JSON response)."""
@@ -290,11 +433,15 @@ def generate(data: ProposalRequest, background_tasks: BackgroundTasks):
     }
     
     prompt = build_prompt(data)
+    # Inject uploaded reference documents if available
+    ref_context = get_uploaded_context(data.device_id)
+    if ref_context:
+        prompt += f"\n\nREFERENCE DOCUMENTS (use these as factual data — do NOT hallucinate beyond them):\n{ref_context}\n\nEnd of reference documents. Incorporate relevant facts from these documents into the proposal.\n"
     expected_weeks = data.duration_months * 4
     sections = generate_proposal(prompt, expected_weeks=expected_weeks, provider_opts=provider_opts)
 
-    cost_data = calculate_cost(data.duration_months, data.expected_users)
-    team = estimate_team_composition(data.duration_months, data.expected_users, data.tech_stack)
+    cost_data = calculate_cost(data.duration_months, data.expected_users, industry=data.industry)
+    team = estimate_team_composition(data.duration_months, data.expected_users, data.tech_stack, industry=data.industry)
 
     # Persist cost report files in background
     try:
@@ -326,10 +473,14 @@ def download_pdf(data: ProposalRequest):
     }
 
     prompt = build_prompt(data)
+    # Inject uploaded reference documents if available
+    ref_context = get_uploaded_context(data.device_id)
+    if ref_context:
+        prompt += f"\n\nREFERENCE DOCUMENTS (use these as factual data — do NOT hallucinate beyond them):\n{ref_context}\n\nEnd of reference documents. Incorporate relevant facts from these documents into the proposal.\n"
     expected_weeks = data.duration_months * 4
     sections = generate_proposal(prompt, expected_weeks=expected_weeks, provider_opts=provider_opts)
-    cost_data = calculate_cost(data.duration_months, data.expected_users)
-    team = estimate_team_composition(data.duration_months, data.expected_users, data.tech_stack)
+    cost_data = calculate_cost(data.duration_months, data.expected_users, industry=data.industry)
+    team = estimate_team_composition(data.duration_months, data.expected_users, data.tech_stack, industry=data.industry)
 
     proposal_for_pdf = {
         "project_title": data.project_title,
@@ -355,6 +506,8 @@ def download_pdf(data: ProposalRequest):
     proposal_id = None
     if data.device_id:
         try:
+            # Merge cost + team into sections so charts work from history
+            sections_full = {**sections, "estimated_cost": cost_data, "team_composition": team}
             proposal_id = record_proposal(
                 device_id=data.device_id,
                 filename=pdf_filename,
@@ -365,7 +518,7 @@ def download_pdf(data: ProposalRequest):
                 users=data.expected_users,
                 provider=data.provider or "ollama",
                 model=data.model or "auto",
-                sections=sections,
+                sections=sections_full,
             )
         except Exception as e:
             log.warning("record_proposal failed: %s", e)
@@ -408,8 +561,8 @@ def edit_proposal(data: EditProposalRequest):
     expected_weeks = data.duration_months * 4
     sections = generate_proposal(prompt, expected_weeks=expected_weeks, provider_opts=provider_opts)
 
-    cost_data = calculate_cost(data.duration_months, data.expected_users)
-    team = estimate_team_composition(data.duration_months, data.expected_users, data.tech_stack)
+    cost_data = calculate_cost(data.duration_months, data.expected_users, industry=data.industry)
+    team = estimate_team_composition(data.duration_months, data.expected_users, data.tech_stack, industry=data.industry)
 
     return {
         "executive_summary": sections["executive_summary"],
@@ -430,8 +583,8 @@ def generate_pdf_from_sections(data: PdfFromSectionsRequest):
     """
     log.info("Building PDF from pre-computed sections: %s", data.project_title)
 
-    cost_data = calculate_cost(data.duration_months, data.expected_users)
-    team = estimate_team_composition(data.duration_months, data.expected_users, data.tech_stack)
+    cost_data = calculate_cost(data.duration_months, data.expected_users, industry=data.industry)
+    team = estimate_team_composition(data.duration_months, data.expected_users, data.tech_stack, industry=data.industry)
 
     sections = data.sections
     proposal_for_pdf = {
@@ -456,6 +609,8 @@ def generate_pdf_from_sections(data: PdfFromSectionsRequest):
 
     if data.device_id:
         try:
+            # Merge cost + team into sections so charts work from history
+            sections_full = {**sections, "estimated_cost": cost_data, "team_composition": team}
             record_proposal(
                 device_id=data.device_id,
                 filename=pdf_filename,
@@ -466,7 +621,7 @@ def generate_pdf_from_sections(data: PdfFromSectionsRequest):
                 users=data.expected_users,
                 provider=data.provider or "ollama",
                 model=data.model or "auto",
-                sections=sections,
+                sections=sections_full,
             )
         except Exception as e:
             log.warning("record_proposal failed: %s", e)

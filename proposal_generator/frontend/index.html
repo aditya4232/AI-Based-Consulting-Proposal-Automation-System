@@ -294,7 +294,12 @@
               </div>
               <div>
                 <label class="label">Industry <span class="text-red-500">*</span></label>
-                <input id="f-industry" type="text" required class="inp" placeholder="e.g. Healthcare">
+                <div class="relative">
+                  <input id="f-industry" type="text" required class="inp pr-8" placeholder="Type or select industry…" autocomplete="off" list="industry-list" onfocus="showIndustryDropdown()" oninput="filterIndustryDropdown()">
+                  <svg class="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"/></svg>
+                  <div id="industry-dropdown" class="hidden absolute z-30 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg max-h-56 overflow-y-auto">
+                  </div>
+                </div>
               </div>
             </div>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -316,6 +321,77 @@
               <label class="label">Custom Details / Additional Requirements</label>
               <textarea id="f-notes" rows="3" class="inp resize-none" placeholder="Optional: special requirements, constraints, integrations, compliance needs, specific features to include…"></textarea>
               <p class="text-[11px] text-gray-400 mt-1">AI will include these notes into the proposal research.</p>
+            </div>
+
+            <!-- Enhanced Parameters Row 1 -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div>
+                <label class="label">Budget Range (INR)</label>
+                <select id="f-budget" class="inp">
+                  <option value="">Select budget…</option>
+                  <option value="Under 5L">Under ₹5 Lakh</option>
+                  <option value="5L-10L">₹5L – ₹10L</option>
+                  <option value="10L-25L">₹10L – ₹25L</option>
+                  <option value="25L-50L">₹25L – ₹50L</option>
+                  <option value="50L-1Cr">₹50L – ₹1 Crore</option>
+                  <option value="1Cr-5Cr">₹1Cr – ₹5 Crore</option>
+                  <option value="5Cr+">₹5 Crore+</option>
+                </select>
+              </div>
+              <div>
+                <label class="label">Priority</label>
+                <select id="f-priority" class="inp">
+                  <option value="">Select…</option>
+                  <option value="low">Low</option>
+                  <option value="medium">Medium</option>
+                  <option value="high">High</option>
+                  <option value="critical">Critical</option>
+                </select>
+              </div>
+              <div>
+                <label class="label">Deployment Model</label>
+                <select id="f-deployment" class="inp">
+                  <option value="">Select…</option>
+                  <option value="cloud">Cloud (AWS/Azure/GCP)</option>
+                  <option value="on-premise">On-Premise</option>
+                  <option value="hybrid">Hybrid</option>
+                  <option value="multi-cloud">Multi-Cloud</option>
+                </select>
+              </div>
+            </div>
+            <!-- Enhanced Parameters Row 2 -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label class="label">Compliance Requirements</label>
+                <input id="f-compliance" type="text" class="inp" placeholder="e.g. HIPAA, GDPR, SOC2, PCI-DSS">
+                <p class="text-[11px] text-gray-400 mt-1">Comma-separated compliance frameworks</p>
+              </div>
+              <div>
+                <label class="label">Target Audience</label>
+                <input id="f-audience" type="text" class="inp" placeholder="e.g. Hospital administrators, patients, doctors">
+              </div>
+            </div>
+            <div>
+              <label class="label">Competitors / Existing Solutions</label>
+              <input id="f-competitors" type="text" class="inp" placeholder="e.g. Practo, Apollo 247, existing in-house system">
+              <p class="text-[11px] text-gray-400 mt-1">Helps AI position the proposal against alternatives</p>
+            </div>
+
+            <!-- File Upload -->
+            <div>
+              <label class="label flex items-center gap-1.5"><i data-lucide="paperclip" class="w-3.5 h-3.5"></i> Reference Files <span class="text-gray-400 font-normal">(optional)</span></label>
+              <div id="file-drop-zone" class="border-2 border-dashed border-gray-200 rounded-xl p-4 text-center cursor-pointer hover:border-brand-400 hover:bg-brand-50/30 transition-all"
+                   onclick="document.getElementById('f-files').click()"
+                   ondragover="event.preventDefault(); this.classList.add('border-brand-400','bg-brand-50/30')"
+                   ondragleave="this.classList.remove('border-brand-400','bg-brand-50/30')"
+                   ondrop="handleFileDrop(event)">
+                <i data-lucide="upload-cloud" class="w-8 h-8 text-gray-300 mx-auto mb-2"></i>
+                <p class="text-xs text-gray-500 font-semibold">Drop files here or <span class="text-brand-600 underline">browse</span></p>
+                <p class="text-[10px] text-gray-400 mt-1">PDF, Word, Excel — max 3 files, 15 MB each</p>
+              </div>
+              <input id="f-files" type="file" multiple accept=".pdf,.doc,.docx,.xls,.xlsx" class="hidden" onchange="handleFileSelect(this.files)">
+              <div id="file-list" class="mt-2 space-y-1.5"></div>
+              <div id="file-upload-status" class="hidden mt-2 text-xs font-semibold text-emerald-600 flex items-center gap-1.5"><i data-lucide="check-circle" class="w-3.5 h-3.5"></i> <span id="file-upload-msg"></span></div>
             </div>
 
             <!-- Cost Preview -->
@@ -592,10 +668,23 @@
       </div>
     </div>
     <div class="p-5 overflow-auto grid grid-cols-1 md:grid-cols-2 gap-4">
-      <div class="bg-gray-50 dark:bg-gray-800 rounded-xl p-3"><canvas id="costChart"></canvas></div>
-      <div class="bg-gray-50 dark:bg-gray-800 rounded-xl p-3"><canvas id="teamChart"></canvas></div>
-      <div class="bg-gray-50 dark:bg-gray-800 rounded-xl p-3"><canvas id="timelineChart"></canvas></div>
-      <div class="bg-gray-50 dark:bg-gray-800 rounded-xl p-3"><canvas id="riskChart"></canvas></div>
+      <div class="bg-gray-50 dark:bg-gray-800 rounded-xl p-4">
+        <h4 class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2 flex items-center gap-1.5"><i data-lucide="indian-rupee" class="w-3.5 h-3.5"></i> Cost Breakdown</h4>
+        <div class="relative" style="height:220px"><canvas id="costChart"></canvas></div>
+        <p id="costChartNote" class="text-[10px] text-gray-400 mt-2 text-center hidden"></p>
+      </div>
+      <div class="bg-gray-50 dark:bg-gray-800 rounded-xl p-4">
+        <h4 class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2 flex items-center gap-1.5"><i data-lucide="users" class="w-3.5 h-3.5"></i> Team Composition</h4>
+        <div class="relative" style="height:220px"><canvas id="teamChart"></canvas></div>
+      </div>
+      <div class="bg-gray-50 dark:bg-gray-800 rounded-xl p-4">
+        <h4 class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2 flex items-center gap-1.5"><i data-lucide="calendar" class="w-3.5 h-3.5"></i> Project Timeline</h4>
+        <div id="timelineChartWrap" class="relative" style="height:260px"><canvas id="timelineChart"></canvas></div>
+      </div>
+      <div class="bg-gray-50 dark:bg-gray-800 rounded-xl p-4">
+        <h4 class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2 flex items-center gap-1.5"><i data-lucide="shield-alert" class="w-3.5 h-3.5"></i> Risk Assessment</h4>
+        <div class="relative" style="height:240px"><canvas id="riskChart"></canvas></div>
+      </div>
     </div>
   </div>
 </div>
@@ -1303,9 +1392,74 @@ function liveUpdateCost() {
 }
 
 /* ═══════════════════════════════════════════════════════════
+   FILE UPLOAD
+═══════════════════════════════════════════════════════════ */
+var _selectedFiles = [];
+var _filesUploaded = false;
+
+function handleFileDrop(e) {
+  e.preventDefault();
+  e.currentTarget.classList.remove('border-brand-400','bg-brand-50/30');
+  handleFileSelect(e.dataTransfer.files);
+}
+
+function handleFileSelect(fileList) {
+  var allowed = ['.pdf','.doc','.docx','.xls','.xlsx'];
+  var maxSize = 15 * 1024 * 1024;
+  var arr = Array.from(fileList);
+  if (_selectedFiles.length + arr.length > 3) { toast('Maximum 3 files allowed.','error'); return; }
+  for (var i = 0; i < arr.length; i++) {
+    var ext = (arr[i].name.match(/\.[^.]+$/) || [''])[0].toLowerCase();
+    if (allowed.indexOf(ext) === -1) { toast('Unsupported file: ' + arr[i].name + '. Use PDF, Word, or Excel.', 'error'); return; }
+    if (arr[i].size > maxSize) { toast(arr[i].name + ' exceeds 15 MB limit.', 'error'); return; }
+    _selectedFiles.push(arr[i]);
+  }
+  _filesUploaded = false;
+  _renderFileList();
+}
+
+function _renderFileList() {
+  var el = $('file-list');
+  if (!_selectedFiles.length) { el.innerHTML = ''; $('file-upload-status').classList.add('hidden'); return; }
+  el.innerHTML = _selectedFiles.map(function(f, i) {
+    var sizeKB = (f.size / 1024).toFixed(1);
+    var icon = f.name.match(/\.pdf$/i) ? 'file-text' : (f.name.match(/\.docx?$/i) ? 'file-type' : 'table');
+    return '<div class="flex items-center justify-between bg-gray-50 rounded-lg px-3 py-2 border border-gray-100">' +
+      '<div class="flex items-center gap-2 min-w-0"><i data-lucide="' + icon + '" class="w-4 h-4 text-gray-400 shrink-0"></i><span class="text-xs font-medium text-gray-700 truncate">' + f.name + '</span><span class="text-[10px] text-gray-400">' + sizeKB + ' KB</span></div>' +
+      '<button type="button" onclick="removeFile(' + i + ')" class="text-gray-400 hover:text-red-500 transition"><i data-lucide="x" class="w-3.5 h-3.5"></i></button>' +
+    '</div>';
+  }).join('');
+  try { lucide.createIcons(); } catch(e) {}
+}
+
+function removeFile(idx) {
+  _selectedFiles.splice(idx, 1);
+  _filesUploaded = false;
+  _renderFileList();
+}
+
+async function uploadFiles() {
+  if (!_selectedFiles.length) return true;
+  if (_filesUploaded) return true;
+  var fd = new FormData();
+  _selectedFiles.forEach(function(f) { fd.append('files', f); });
+  fd.append('device_id', cfg.device_id || '');
+  try {
+    var r = await fetch(API + '/upload-files', { method: 'POST', body: fd });
+    if (!r.ok) { var err = await r.json(); throw new Error(err.detail || 'Upload failed'); }
+    var d = await r.json();
+    _filesUploaded = true;
+    $('file-upload-status').classList.remove('hidden');
+    $('file-upload-msg').textContent = d.uploaded + ' file(s) uploaded & parsed — content will be used in proposal.';
+    return true;
+  } catch(e) { toast('File upload failed: ' + e.message, 'error'); return false; }
+}
+
+/* ═══════════════════════════════════════════════════════════
    FORM PAYLOAD
 ═══════════════════════════════════════════════════════════ */
 function payload() {
+  var compliance = ($('f-compliance').value || '').split(',').map(function(s) { return s.trim(); }).filter(Boolean);
   return {
     project_title:   $('f-title').value,
     client_name:     $('f-client').value || '',
@@ -1314,6 +1468,12 @@ function payload() {
     expected_users:  parseInt($('f-users').value)  || 100,
     tech_stack:      $('f-stack').value.split(',').map(function(s) { return s.trim(); }).filter(Boolean),
     custom_notes:    ($('f-notes').value || '').trim() || null,
+    budget_range:    $('f-budget').value || null,
+    project_priority: $('f-priority').value || null,
+    deployment_model: $('f-deployment').value || null,
+    compliance_requirements: compliance.length ? compliance : null,
+    target_audience: ($('f-audience').value || '').trim() || null,
+    competitors:     ($('f-competitors').value || '').trim() || null,
     user_name:       localStorage.getItem('pai_user_name') || null,
     provider:        cfg.provider,
     model:           cfg.provider === 'ollama' ? (cfg.model || null) : (cfg.ext_model || null),
@@ -1399,59 +1559,139 @@ function openChartsModal(sectionsObj, payloadObj, title) {
   $('charts-modal-title').textContent = modalTitle + ' — Charts';
   $('charts-modal').classList.remove('hidden'); document.body.style.overflow = 'hidden';
 
-  // Cost pie - check payload.estimated_cost or payload.estimated_cost
-  var cost = (payload && payload.estimated_cost) || (payload && payload.cost) || null;
-  try { if (_charts.cost) _charts.cost.destroy(); } catch(e){}
-  try { if (_charts.team) _charts.team.destroy(); } catch(e){}
-  try { if (_charts.timeline) _charts.timeline.destroy(); } catch(e){}
-  try { if (_charts.risk) _charts.risk.destroy(); } catch(e){}
+  // Cost pie - check payload.estimated_cost, sections.estimated_cost
+  var cost = (payload && payload.estimated_cost) || (sections && sections.estimated_cost) || (payload && payload.cost) || null;
+  var team = (payload && payload.team_composition) || (sections && sections.team_composition) || [];
+  var timeline = (sections && sections.timeline) || (payload && payload.timeline) || [];
+  var risks = (sections && sections.risk_assessment) || (payload && payload.risk_assessment) || [];
 
-  // Render cost chart if present
+  try { if (_charts.cost) _charts.cost.destroy(); } catch(e){} _charts.cost = null;
+  try { if (_charts.team) _charts.team.destroy(); } catch(e){} _charts.team = null;
+  try { if (_charts.timeline) _charts.timeline.destroy(); } catch(e){} _charts.timeline = null;
+  try { if (_charts.risk) _charts.risk.destroy(); } catch(e){} _charts.risk = null;
+
+  _charts.cost     = _renderCostChart(cost);
+  _charts.team     = _renderTeamChart(team);
+  _charts.timeline = _renderTimelineChart(timeline);
+  _charts.risk     = _renderRiskChart(risks);
+}
+
+/* ── Chart sub-renderers ── */
+function _renderCostChart(cost) {
   if (cost && typeof cost === 'object') {
-    var labels = [], data = [];
-    ['development_cost','infrastructure_cost','contingency','discount'].forEach(function(k){ if (cost[k] && Number(cost[k]) !== 0){ labels.push(k.replace('_',' ')); data.push(Math.abs(Number(cost[k]))); }});
+    var labels = [], data = [], bgColors = [];
+    var colorMap = { development_cost:'#1e40af', infrastructure_cost:'#2563eb', contingency:'#f59e0b', discount:'#22c55e' };
+    ['development_cost','infrastructure_cost','contingency','discount'].forEach(function(k){
+      if (cost[k] && Number(cost[k]) !== 0){ labels.push(k.replace(/_/g,' ').replace(/\b\w/g,function(c){return c.toUpperCase();})); data.push(Math.abs(Number(cost[k]))); bgColors.push(colorMap[k]||'#60a5fa'); }
+    });
     if (labels.length) {
       var ctx = document.getElementById('costChart').getContext('2d');
-      _charts.cost = new Chart(ctx, { type: 'doughnut', data: { labels: labels, datasets:[{ data: data, backgroundColor: ['#1e40af','#2563eb','#60a5fa','#f59e0b'] }] }, options: { plugins:{legend:{position:'bottom'}} } });
+      var chart = new Chart(ctx, {
+        type: 'doughnut',
+        data: { labels: labels, datasets:[{ data: data, backgroundColor: bgColors, borderWidth: 2, borderColor: '#fff', hoverOffset: 8 }] },
+        options: {
+          responsive: true, maintainAspectRatio: false, cutout: '55%',
+          plugins: {
+            legend: { position:'bottom', labels:{ padding:12, usePointStyle:true, pointStyle:'circle', font:{size:11} } },
+            tooltip: { callbacks: { label: function(c) { var v = c.parsed; return ' ' + c.label + ': \u20B9' + Number(v).toLocaleString('en-IN'); } } }
+          }
+        }
+      });
+      var noteEl = document.getElementById('costChartNote');
+      var totalVal = cost.total_estimated_cost || cost.total_cost;
+      if (totalVal && noteEl) { noteEl.textContent = 'Total: \u20B9' + Number(totalVal).toLocaleString('en-IN') + (cost.industry_applied ? ' (Industry: ' + cost.industry_applied + ')' : ''); noteEl.classList.remove('hidden'); }
+      return chart;
     }
-  } else {
-    // clear canvas
-    var ctx = document.getElementById('costChart').getContext('2d'); ctx.clearRect(0,0,ctx.canvas.width, ctx.canvas.height);
   }
+  var ctx = document.getElementById('costChart').getContext('2d'); ctx.clearRect(0,0,ctx.canvas.width, ctx.canvas.height);
+  var noteEl = document.getElementById('costChartNote'); if (noteEl) noteEl.classList.add('hidden');
+  return null;
+}
 
-  // Team chart - try payload.team_composition or sections.team_composition
-  var team = (payload && payload.team_composition) || (sections && sections.team_composition) || [];
+function _renderTeamChart(team) {
   if (team && team.length) {
-    var labs = team.map(function(t){ return t.role || t.name || 'Role'; });
-    var vals = team.map(function(t){ var c = t.count || t.headcount || 1; return Number(String(c).split('-')[0]) || 1; });
-    var ctx2 = document.getElementById('teamChart').getContext('2d');
-    _charts.team = new Chart(ctx2, { type: 'bar', data: { labels: labs, datasets:[{ label: 'Headcount', data: vals, backgroundColor: '#3b82f6' }] }, options: { indexAxis: 'y', plugins:{legend:{display:false}}, scales:{x:{beginAtZero:true}} } });
-  } else { var ctx2 = document.getElementById('teamChart').getContext('2d'); ctx2.clearRect(0,0,ctx2.canvas.width, ctx2.canvas.height); }
+    var labs = team.map(function(r){ return r.role || r.name || 'Role'; });
+    var vals = team.map(function(r){ var c = r.count || r.headcount || 1; return Number(String(c).split('-')[0]) || 1; });
+    var barBg = vals.map(function(_,i){ return ['#3b82f6','#6366f1','#8b5cf6','#a78bfa','#c084fc','#d946ef','#ec4899','#f43f5e'][i%8]; });
+    var ctx = document.getElementById('teamChart').getContext('2d');
+    return new Chart(ctx, {
+      type: 'bar',
+      data: { labels: labs, datasets:[{ label: 'Headcount', data: vals, backgroundColor: barBg, borderRadius: 6, barPercentage: 0.7 }] },
+      options: {
+        responsive: true, maintainAspectRatio: false, indexAxis: 'y',
+        plugins: { legend:{display:false}, tooltip:{ callbacks:{ label: function(c){ return ' ' + c.parsed.x + ' member' + (c.parsed.x>1?'s':''); } } } },
+        scales: { x:{beginAtZero:true, ticks:{stepSize:1, font:{size:10}}, grid:{display:false}}, y:{ticks:{font:{size:10}}} }
+      }
+    });
+  }
+  var ctx = document.getElementById('teamChart').getContext('2d'); ctx.clearRect(0,0,ctx.canvas.width, ctx.canvas.height);
+  return null;
+}
 
-  // Timeline chart from sections.timeline
-  var timeline = sections && sections.timeline ? sections.timeline : (payload && payload.timeline ? payload.timeline : []);
+function _renderTimelineChart(timeline) {
   if (timeline && timeline.length) {
     var tLabs = timeline.map(function(p){ return p.phase || p[0] || 'Phase'; });
     var tVals = timeline.map(function(p){ return Number(p.weeks || (p[1]||0)) || 0; });
-    var ctx3 = document.getElementById('timelineChart').getContext('2d');
-    _charts.timeline = new Chart(ctx3, { type: 'bar', data: { labels: tLabs, datasets:[{ label:'Weeks', data: tVals, backgroundColor: '#7c3aed' }] }, options: { plugins:{legend:{display:false}}, scales:{y:{beginAtZero:true}} } });
-  } else { var ctx3 = document.getElementById('timelineChart').getContext('2d'); ctx3.clearRect(0,0,ctx3.canvas.width, ctx3.canvas.height); }
+    var tColors = tVals.map(function(_,i){ return ['#7c3aed','#8b5cf6','#a78bfa','#c084fc','#ddd6fe','#6d28d9','#5b21b6','#4c1d95'][i%8]; });
+    /* Dynamically size the container for many phases */
+    var wrap = document.getElementById('timelineChartWrap');
+    if (wrap) { var h = Math.max(260, timeline.length * 38 + 60); wrap.style.height = h + 'px'; }
+    var ctx = document.getElementById('timelineChart').getContext('2d');
+    return new Chart(ctx, {
+      type: 'bar',
+      data: { labels: tLabs, datasets:[{ label:'Weeks', data: tVals, backgroundColor: tColors, borderRadius: 6, barPercentage: 0.65 }] },
+      options: {
+        responsive: true, maintainAspectRatio: false, indexAxis: 'y',
+        plugins: { legend:{display:false}, tooltip:{ callbacks:{ label: function(c){ return ' ' + c.parsed.x + ' week' + (c.parsed.x>1?'s':''); } } } },
+        scales: { x:{beginAtZero:true, ticks:{stepSize:1, font:{size:10}}, title:{display:true, text:'Weeks', font:{size:10}}, grid:{display:false}}, y:{ticks:{font:{size:10}}} }
+      }
+    });
+  }
+  var ctx = document.getElementById('timelineChart').getContext('2d'); ctx.clearRect(0,0,ctx.canvas.width, ctx.canvas.height);
+  return null;
+}
 
-  // Risk chart aggregated counts by impact
-  var risks = sections && sections.risk_assessment ? sections.risk_assessment : (payload && payload.risk_assessment ? payload.risk_assessment : []);
+function _renderRiskChart(risks) {
   if (risks && risks.length) {
-    var counts = { High:0, Medium:0, Low:0 };
-    risks.forEach(function(r){ var imp = (r.impact || 'Medium'); if (counts[imp]!==undefined) counts[imp]++; });
-    var ctx4 = document.getElementById('riskChart').getContext('2d');
-    _charts.risk = new Chart(ctx4, { type: 'pie', data: { labels: ['High','Medium','Low'], datasets:[{ data: [counts.High, counts.Medium, counts.Low], backgroundColor: ['#ef4444','#f59e0b','#22c55e'] }] }, options:{ plugins:{legend:{position:'bottom'}} } });
-  } else { var ctx4 = document.getElementById('riskChart').getContext('2d'); ctx4.clearRect(0,0,ctx4.canvas.width, ctx4.canvas.height); }
+    if (risks.length <= 8) {
+      var rLabels = risks.map(function(x){ return (x.risk || x.name || 'Risk').substring(0, 35); });
+      var rData = risks.map(function(x){
+        var pm = { High:3, Medium:2, Low:1 }, im = { High:3, Medium:2, Low:1 };
+        return (pm[x.probability] || 2) * (im[x.impact] || 2);
+      });
+      var rColors = risks.map(function(x){ return x.impact==='High' ? '#ef4444' : x.impact==='Low' ? '#22c55e' : '#f59e0b'; });
+      var ctx = document.getElementById('riskChart').getContext('2d');
+      return new Chart(ctx, {
+        type: 'polarArea',
+        data: { labels: rLabels, datasets:[{ data: rData, backgroundColor: rColors.map(function(c){ return c + 'cc'; }), borderColor: rColors, borderWidth: 2 }] },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: { legend:{ position:'bottom', labels:{ padding:8, usePointStyle:true, font:{size:9} } },
+            tooltip:{ callbacks:{ label: function(ctx){ var ri = risks[ctx.dataIndex]; return ' ' + (ri.risk||ri.name||'Risk') + ' (Impact: ' + (ri.impact||'?') + ', Prob: ' + (ri.probability||'?') + ')'; } } }
+          },
+          scales: { r:{ ticks:{display:false}, grid:{color:'rgba(0,0,0,0.05)'}} }
+        }
+      });
+    } else {
+      var counts = { High:0, Medium:0, Low:0 };
+      risks.forEach(function(x){ var imp = (x.impact || 'Medium'); if (counts[imp]!==undefined) counts[imp]++; });
+      var ctx = document.getElementById('riskChart').getContext('2d');
+      return new Chart(ctx, {
+        type: 'doughnut',
+        data: { labels: ['High','Medium','Low'], datasets:[{ data: [counts.High, counts.Medium, counts.Low], backgroundColor: ['#ef4444','#f59e0b','#22c55e'], borderWidth:2, borderColor:'#fff' }] },
+        options: { responsive:true, maintainAspectRatio:false, cutout:'50%', plugins:{legend:{position:'bottom', labels:{padding:10, usePointStyle:true, font:{size:11}}}} }
+      });
+    }
+  }
+  var ctx = document.getElementById('riskChart').getContext('2d'); ctx.clearRect(0,0,ctx.canvas.width, ctx.canvas.height);
+  return null;
 }
 
 function closeChartsModal() {
-  try { if (_charts.cost) _charts.cost.destroy(); } catch(e){}
-  try { if (_charts.team) _charts.team.destroy(); } catch(e){}
-  try { if (_charts.timeline) _charts.timeline.destroy(); } catch(e){}
-  try { if (_charts.risk) _charts.risk.destroy(); } catch(e){}
+  try { if (_charts.cost) _charts.cost.destroy(); } catch(e){} _charts.cost = null;
+  try { if (_charts.team) _charts.team.destroy(); } catch(e){} _charts.team = null;
+  try { if (_charts.timeline) _charts.timeline.destroy(); } catch(e){} _charts.timeline = null;
+  try { if (_charts.risk) _charts.risk.destroy(); } catch(e){} _charts.risk = null;
   $('charts-modal').classList.add('hidden'); document.body.style.overflow = ''; 
 }
 
@@ -1521,7 +1761,7 @@ async function submitEditAndPDF() {
     });
     if (!r1.ok) throw new Error(await r1.text());
     var d = await r1.json();
-    _lastSections = { executive_summary: d.executive_summary, technical_approach: d.technical_approach, timeline: d.timeline, risk_assessment: d.risk_assessment, deliverables: d.deliverables };
+    _lastSections = { executive_summary: d.executive_summary, technical_approach: d.technical_approach, timeline: d.timeline, risk_assessment: d.risk_assessment, deliverables: d.deliverables, estimated_cost: d.estimated_cost || null, team_composition: d.team_composition || null };
     /* Step 2: build PDF using pre-computed sections — NO second LLM call */
     var p = _lastProposalPayload || payload();
     var pdfSectionsPayload = {
@@ -1570,6 +1810,8 @@ async function genPreview() {
   if (!form.checkValidity()) { form.reportValidity(); return; }
   loader(true, 'Generating draft\u2026', 'AI is building your proposal structure.');
   try {
+    /* Upload reference files first if any */
+    if (_selectedFiles.length && !_filesUploaded) { var ok = await uploadFiles(); if (!ok) { loader(false); return; } }
     var p = payload();
     var r = await fetch(API + '/generate-proposal', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -1578,7 +1820,7 @@ async function genPreview() {
     if (!r.ok) { var e = await r.text(); throw new Error(e); }
     var d = await r.json();
     _lastProposalPayload = p;
-    _lastSections = { executive_summary: d.executive_summary, technical_approach: d.technical_approach, timeline: d.timeline, risk_assessment: d.risk_assessment, deliverables: d.deliverables };
+    _lastSections = { executive_summary: d.executive_summary, technical_approach: d.technical_approach, timeline: d.timeline, risk_assessment: d.risk_assessment, deliverables: d.deliverables, estimated_cost: d.estimated_cost || null, team_composition: d.team_composition || null };
     _renderDocPreview(p, _lastSections, d);
     $('iterate-panel').classList.remove('hidden');
     $('edit-result').classList.add('hidden');
@@ -1715,6 +1957,8 @@ $('prop-form').addEventListener('submit', async function(e) {
   _bgMode = false;
   _bgJobId = null;
   loader(true, 'Generating PDF\u2026', 'This may take 20-60 seconds depending on the model.', true);
+  /* Upload reference files first if any */
+  if (_selectedFiles.length && !_filesUploaded) { var ok = await uploadFiles(); if (!ok) { loader(false); return; } }
   var p = payload();
   var jobTitle = (p.project_title || 'Proposal').slice(0, 60);
   try {
@@ -1735,7 +1979,7 @@ $('prop-form').addEventListener('submit', async function(e) {
         if (r2.ok) {
           var d2 = await r2.json();
           _lastProposalPayload = p;
-          _lastSections = { executive_summary: d2.executive_summary, technical_approach: d2.technical_approach, timeline: d2.timeline, risk_assessment: d2.risk_assessment, deliverables: d2.deliverables };
+          _lastSections = { executive_summary: d2.executive_summary, technical_approach: d2.technical_approach, timeline: d2.timeline, risk_assessment: d2.risk_assessment, deliverables: d2.deliverables, estimated_cost: d2.estimated_cost || null, team_composition: d2.team_composition || null };
           _renderDocPreview(p, _lastSections, d2);
         }
       }
@@ -1790,33 +2034,151 @@ openPDF = function(url, title) {
 /* ═══════════════════════════════════════════════════════════
    MAGIC FILL
 ═══════════════════════════════════════════════════════════ */
+/* ════════════════════════════════════════════════════════
+   INDUSTRY DROPDOWN
+════════════════════════════════════════════════════════ */
+var INDUSTRIES = [
+  { name:'Healthcare', icon:'\u{1F3E5}', desc:'Hospitals, clinics, health-tech, telemedicine' },
+  { name:'Finance', icon:'\u{1F3E6}', desc:'Banking, investment, wealth management' },
+  { name:'FinTech', icon:'\u{1F4B3}', desc:'Digital payments, neo-banks, crypto exchanges' },
+  { name:'Insurance', icon:'\u{1F6E1}\uFE0F', desc:'Life, health, auto, reinsurance' },
+  { name:'Education', icon:'\u{1F393}', desc:'EdTech, LMS, e-learning, universities' },
+  { name:'E-Commerce', icon:'\u{1F6D2}', desc:'Online retail, D2C, marketplace' },
+  { name:'Retail', icon:'\u{1F3EA}', desc:'Brick-and-mortar, POS, omni-channel' },
+  { name:'Manufacturing', icon:'\u{1F3ED}', desc:'Production, quality, plant automation' },
+  { name:'Logistics', icon:'\u{1F69B}', desc:'Supply chain, fleet, warehousing' },
+  { name:'Real Estate', icon:'\u{1F3E0}', desc:'PropTech, listings, property management' },
+  { name:'Telecommunications', icon:'\u{1F4E1}', desc:'Carriers, ISPs, network infra' },
+  { name:'Energy', icon:'\u26A1', desc:'Utilities, oil & gas, smart grid' },
+  { name:'Agriculture', icon:'\u{1F33E}', desc:'AgriTech, precision farming, supply chain' },
+  { name:'Automotive', icon:'\u{1F697}', desc:'OEMs, EV, connected vehicles, dealerships' },
+  { name:'Travel & Hospitality', icon:'\u2708\uFE0F', desc:'Airlines, hotels, booking platforms' },
+  { name:'Food & Beverage', icon:'\u{1F37D}\uFE0F', desc:'Restaurants, delivery, CPG food brands' },
+  { name:'Media & Entertainment', icon:'\u{1F3AC}', desc:'Streaming, OTT, publishing, gaming' },
+  { name:'Gaming', icon:'\u{1F3AE}', desc:'Game dev, esports, game platforms' },
+  { name:'Government', icon:'\u{1F3DB}\uFE0F', desc:'Public sector, civic tech, e-governance' },
+  { name:'Defence', icon:'\u{1F396}\uFE0F', desc:'Military systems, cybersecurity, intelligence' },
+  { name:'Pharmaceutical', icon:'\u{1F48A}', desc:'Drug R&D, clinical trials, pharma supply' },
+  { name:'Biotechnology', icon:'\u{1F9EC}', desc:'Genomics, bio-informatics, lab systems' },
+  { name:'Construction', icon:'\u{1F3D7}\uFE0F', desc:'Project mgmt, BIM, site monitoring' },
+  { name:'Mining', icon:'\u26CF\uFE0F', desc:'Extraction, mineral processing, safety' },
+  { name:'Legal', icon:'\u2696\uFE0F', desc:'LegalTech, case management, contracts' },
+  { name:'HR & Recruitment', icon:'\u{1F465}', desc:'HRMS, ATS, workforce analytics' },
+  { name:'Non-Profit', icon:'\u{1F91D}', desc:'NGOs, fundraising, donor management' },
+  { name:'SaaS / Cloud', icon:'\u2601\uFE0F', desc:'Cloud platforms, PaaS, SaaS products' },
+  { name:'Cybersecurity', icon:'\u{1F512}', desc:'InfoSec, SIEM, threat intelligence' },
+  { name:'AI / Machine Learning', icon:'\u{1F916}', desc:'ML platforms, NLP, computer vision' },
+  { name:'Blockchain', icon:'\u{1F517}', desc:'DeFi, NFT, distributed ledger, Web3' },
+  { name:'Sports & Fitness', icon:'\u{1F3C5}', desc:'Sports analytics, fitness apps, wearables' },
+  { name:'Fashion', icon:'\u{1F457}', desc:'Fashion tech, virtual try-on, apparel' },
+  { name:'Aerospace', icon:'\u{1F680}', desc:'Space tech, avionics, satellite systems' },
+  { name:'Environmental', icon:'\u{1F30D}', desc:'CleanTech, waste mgmt, sustainability' },
+  { name:'Technology', icon:'\u{1F4BB}', desc:'General IT, software development, consulting' }
+];
+
+function showIndustryDropdown() {
+  var dd = $('industry-dropdown');
+  if (!dd) return;
+  filterIndustryDropdown();
+  dd.classList.remove('hidden');
+  setTimeout(function() {
+    document.addEventListener('click', _closeIndDD, { once: true });
+  }, 50);
+}
+function _closeIndDD(e) {
+  var dd = $('industry-dropdown');
+  if (!dd) return;
+  if (!dd.parentElement.contains(e.target)) dd.classList.add('hidden');
+  else { setTimeout(function(){ document.addEventListener('click', _closeIndDD, {once:true}); }, 50); }
+}
+function filterIndustryDropdown() {
+  var dd = $('industry-dropdown');
+  if (!dd) return;
+  var q = ($('f-industry').value || '').toLowerCase();
+  var html = '';
+  INDUSTRIES.forEach(function(ind) {
+    if (q && ind.name.toLowerCase().indexOf(q) === -1 && ind.desc.toLowerCase().indexOf(q) === -1) return;
+    html += '<div class="flex items-center gap-2 px-3 py-2 cursor-pointer hover:bg-brand-50 transition text-sm" onclick="selectIndustry(\'' + ind.name.replace(/'/g,"\\'") + '\')">';
+    html += '<span class="text-lg">' + ind.icon + '</span>';
+    html += '<div><div class="font-medium text-gray-800">' + ind.name + '</div>';
+    html += '<div class="text-[10px] text-gray-400">' + ind.desc + '</div></div></div>';
+  });
+  if (!html) html = '<div class="px-3 py-2 text-xs text-gray-400">No matching industry</div>';
+  dd.innerHTML = html;
+}
+function selectIndustry(name) {
+  $('f-industry').value = name;
+  $('industry-dropdown').classList.add('hidden');
+}
+
+/* ════════════════════════════════════════════════════════
+   MAGIC FILL  (enhanced - 35+ industry patterns)
+════════════════════════════════════════════════════════ */
 function magicFill() {
   var txt = $('magic-input').value.trim();
   if (!txt) { toast('Enter a description first', 'error'); return; }
 
-  /* Title: extract after verb, or fall back to title-casing the whole query */
-  var titleM = txt.match(/(?:build|create|develop|design|make|launch|deploy)\s+(?:a\s+|an\s+)?(.+?)(?:\s+for\s+|\s+using\s+|\s+with\s+|,|$)/i);
+  var titleM = txt.match(/(?:build|create|develop|design|make|launch|deploy|implement|architect|set\s*up)\s+(?:a\s+|an\s+)?(.+?)(?:\s+for\s+|\s+using\s+|\s+with\s+|,|$)/i);
   var title = titleM
     ? titleM[1].trim().replace(/\b\w/g, function(c) { return c.toUpperCase(); }).slice(0, 120)
-    : txt.replace(/\s+(?:in|using|with|on|for)\s+.*/i, '').trim()  /* drop stack/context suffix */
+    : txt.replace(/\s+(?:in|using|with|on|for)\s+.*/i, '').trim()
         .replace(/\b\w/g, function(c) { return c.toUpperCase(); }).slice(0, 120);
 
   var monM  = txt.match(/(\d+)\s*months?/i);
   var usrM  = txt.match(/(\d[\d,]*)\s*(?:k\s+)?users?/i);
-  var indM  = txt.match(/(healthcare|health|diabet|diabetic|pharma|medic|finance|fintech|banking|ecommerce|e-commerce|retail|education|manufacturing|logistics|saas|cloud|real\s*estate|insurance|telecom)/i);
-  var techM = txt.match(/(?:using|with|built\s+on|in)\s+((?:[A-Za-z0-9.#+\-]+(?:\s*,\s*|\s*&\s*|\s+and\s+)?)+)/i);
+  var techM = txt.match(/(?:using|with|built\s+on|in|stack[:\s]+)\s+((?:[A-Za-z0-9.#+\/\-_()]+(?:\s*,\s*|\s*&\s*|\s+and\s+)?)+)/i);
 
   var months = monM ? Math.min(60, parseInt(monM[1])) : 6;
   var users  = usrM ? parseInt(usrM[1].replace(/,/g, '')) * (txt.match(/\d+\s*k\s/i) ? 1000 : 1) : 500;
-  /* Infer industry from keywords — healthcare/diabet* → Healthcare */
-  var ind = indM ? indM[1].charAt(0).toUpperCase() + indM[1].slice(1).toLowerCase() : 'Technology';
-  if (/diabet/i.test(ind)) ind = 'Healthcare';
-  if (/medic|pharma/i.test(ind)) ind = 'Healthcare';
+
+  var industryPatterns = [
+    { re:/healthcare|health\s*tech|hospital|clinic|telemedicine|EMR|EHR|patient\s*portal|medical\s*record/i, ind:'Healthcare' },
+    { re:/diabet|chronic\s*disease|remote\s*patient|wearable\s*health/i, ind:'Healthcare' },
+    { re:/pharma|drug\s*discovery|clinical\s*trial|GxP/i, ind:'Pharmaceutical' },
+    { re:/biotech|genom|bioinformat|CRISPR|lab\s*information/i, ind:'Biotechnology' },
+    { re:/financ|banking|bank\s|wealth\s*manage|capital\s*market|trading\s*platform/i, ind:'Finance' },
+    { re:/fintech|neo.?bank|digital\s*payment|payment\s*gateway|UPI|mobile\s*wallet|crypto\s*exchange/i, ind:'FinTech' },
+    { re:/insurance|insur.?tech|underwriting|claims\s*manage|actuarial/i, ind:'Insurance' },
+    { re:/e.?commerce|online\s*store|marketplace|shopify|product\s*catalog|shopping\s*cart/i, ind:'E-Commerce' },
+    { re:/retail|POS|point.of.sale|inventory\s*manage|omni.?channel|brick.and.mortar/i, ind:'Retail' },
+    { re:/manufactur|factory|plant\s*automat|MES\b|quality\s*control|production\s*line/i, ind:'Manufacturing' },
+    { re:/logistic|supply\s*chain|fleet\s*manage|warehous|freight|shipping\s*track|3PL|last.?mile/i, ind:'Logistics' },
+    { re:/educat|e.?learn|LMS|MOOC|student\s*portal|university|school\s*manage|EdTech/i, ind:'Education' },
+    { re:/real\s*estate|prop.?tech|property|listing|MLS|tenant\s*manage/i, ind:'Real Estate' },
+    { re:/telecom|ISP|network\s*manage|5G|carrier|spectrum/i, ind:'Telecommunications' },
+    { re:/energy|utilit|oil\s*(and|&)\s*gas|smart\s*grid|solar|renewable|power\s*plant/i, ind:'Energy' },
+    { re:/agri|farm|crop|precision\s*farm|livestock|agro/i, ind:'Agriculture' },
+    { re:/automot|vehicle|EV\b|connected\s*car|OEM|dealer|ADAS|self.?driv/i, ind:'Automotive' },
+    { re:/travel|hotel|booking|airline|hospitality|tourism|reservation/i, ind:'Travel & Hospitality' },
+    { re:/food|beverage|restaurant|delivery|recipe|CPG\s*food|ghost\s*kitchen/i, ind:'Food & Beverage' },
+    { re:/media|entertainment|streaming|OTT|publish|content\s*manage|video\s*platform/i, ind:'Media & Entertainment' },
+    { re:/gaming|game\s*dev|esport|metaverse|game\s*engine/i, ind:'Gaming' },
+    { re:/government|public\s*sector|civic|e.?governance|municipal|citizen\s*portal/i, ind:'Government' },
+    { re:/defen[cs]e|military|intelligence|tactical/i, ind:'Defence' },
+    { re:/construct|building|BIM|site\s*monitor|project\s*manage.*build/i, ind:'Construction' },
+    { re:/mining|mineral|extraction|geolog/i, ind:'Mining' },
+    { re:/legal|law\s*firm|case\s*manage|contract\s*manage|compliance\s*manage/i, ind:'Legal' },
+    { re:/\bHR\b|recruit|talent|workforce|ATS|payroll|HRMS/i, ind:'HR & Recruitment' },
+    { re:/non.?profit|NGO|fundrais|donor|charity/i, ind:'Non-Profit' },
+    { re:/saas|cloud\s*platform|PaaS|multi.?tenant/i, ind:'SaaS / Cloud' },
+    { re:/cyber.?secur|infosec|SIEM|threat\s*intell|penetration\s*test|SOC\b/i, ind:'Cybersecurity' },
+    { re:/\bAI\b|machine\s*learn|deep\s*learn|NLP|computer\s*vision|LLM|GPT|neural/i, ind:'AI / Machine Learning' },
+    { re:/blockchain|DeFi|NFT|web3|distributed\s*ledger|smart\s*contract|solidity/i, ind:'Blockchain' },
+    { re:/sport|fitness|workout|athlete|wearable.*sport/i, ind:'Sports & Fitness' },
+    { re:/fashion|apparel|virtual\s*try.?on|garment/i, ind:'Fashion' },
+    { re:/aerospace|avionics|satellite|space\s*tech|rocket/i, ind:'Aerospace' },
+    { re:/environment|clean.?tech|climat|sustainab|waste\s*manage|carbon/i, ind:'Environmental' }
+  ];
+  var ind = 'Technology';
+  for (var i = 0; i < industryPatterns.length; i++) {
+    if (industryPatterns[i].re.test(txt)) { ind = industryPatterns[i].ind; break; }
+  }
+
   var techRaw = '';
   if (techM) {
     techRaw = techM[1].split(/\s*[,&]\s*|\s+and\s+/i)
       .map(function(t) { return t.trim(); })
-      .filter(function(t) { return t.length > 0 && t.length < 30 && /^[A-Za-z0-9.#+\- ]+$/.test(t); })
+      .filter(function(t) { return t.length > 0 && t.length < 40 && /^[A-Za-z0-9.#+\/\-_ ()]+$/.test(t); })
       .join(', ');
   }
 
@@ -1826,9 +2188,8 @@ function magicFill() {
   $('f-months').value   = months;
   $('f-users').value    = users;
   $('f-stack').value    = techRaw || 'Python, React, AWS';
-  /* Do NOT auto-show cost estimate — user must click “Estimate Cost” */
   $('cost-box').classList.add('hidden');
-  toast('Form filled from your description — review and adjust as needed.', 'info');
+  toast('Form filled from your description - review and adjust as needed.', 'info');
 }
 
 /* ═══════════════════════════════════════════════════════════

@@ -7,17 +7,128 @@ from uuid import uuid4
 from math import ceil
 
 
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# INDUSTRY COST MULTIPLIERS
+# Different industries have varying cost structures due to compliance overhead,
+# specialised talent requirements, infrastructure complexity, and risk premiums.
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+INDUSTRY_COST_MULTIPLIERS: dict[str, dict] = {
+    # industry_key: { dev_multiplier, infra_multiplier, contingency_pct, reason }
+    "healthcare":       {"dev": 1.35, "infra": 1.25, "contingency": 0.15, "reason": "HIPAA/HITECH compliance, HL7 FHIR integration, audit trails"},
+    "finance":          {"dev": 1.40, "infra": 1.30, "contingency": 0.15, "reason": "PCI DSS, SOX compliance, high-availability requirements, regulatory reporting"},
+    "fintech":          {"dev": 1.35, "infra": 1.25, "contingency": 0.15, "reason": "Regulatory compliance (RBI/SEBI), real-time transaction processing, security hardening"},
+    "insurance":        {"dev": 1.30, "infra": 1.20, "contingency": 0.15, "reason": "Actuarial systems, regulatory compliance (IRDAI), legacy integration"},
+    "pharmaceuticals":  {"dev": 1.40, "infra": 1.20, "contingency": 0.15, "reason": "GxP validation, FDA 21 CFR Part 11, data integrity requirements"},
+    "ecommerce":        {"dev": 1.10, "infra": 1.30, "contingency": 0.12, "reason": "High traffic handling, payment security, CDN and caching infrastructure"},
+    "retail":           {"dev": 1.10, "infra": 1.15, "contingency": 0.10, "reason": "Omnichannel integration, POS systems, inventory management"},
+    "education":        {"dev": 1.00, "infra": 1.10, "contingency": 0.10, "reason": "Standard web platform with LMS integration"},
+    "manufacturing":    {"dev": 1.25, "infra": 1.20, "contingency": 0.12, "reason": "OT/IT convergence, industrial IoT, MES/ERP integration"},
+    "logistics":        {"dev": 1.15, "infra": 1.20, "contingency": 0.12, "reason": "Real-time tracking infrastructure, GPS/IoT integration, route optimization"},
+    "real estate":      {"dev": 1.10, "infra": 1.10, "contingency": 0.10, "reason": "Property management, GIS integration, document management"},
+    "telecom":          {"dev": 1.30, "infra": 1.35, "contingency": 0.15, "reason": "High-availability OSS/BSS, network integration, massive scale"},
+    "energy":           {"dev": 1.25, "infra": 1.25, "contingency": 0.15, "reason": "SCADA integration, grid security, regulatory compliance"},
+    "automotive":       {"dev": 1.30, "infra": 1.20, "contingency": 0.12, "reason": "Functional safety (ISO 26262), embedded systems, V2X connectivity"},
+    "media":            {"dev": 1.10, "infra": 1.30, "contingency": 0.10, "reason": "CDN-heavy infrastructure, DRM, live streaming scalability"},
+    "gaming":           {"dev": 1.20, "infra": 1.35, "contingency": 0.12, "reason": "Low-latency server infrastructure, anti-cheat, real-time multiplayer"},
+    "agriculture":      {"dev": 1.05, "infra": 1.10, "contingency": 0.10, "reason": "IoT sensor integration, rural connectivity challenges"},
+    "government":       {"dev": 1.20, "infra": 1.15, "contingency": 0.15, "reason": "Security clearances, accessibility compliance, legacy system integration"},
+    "hospitality":      {"dev": 1.05, "infra": 1.10, "contingency": 0.10, "reason": "PMS integration, booking engine, multi-property support"},
+    "construction":     {"dev": 1.15, "infra": 1.10, "contingency": 0.12, "reason": "BIM integration, field mobility, safety compliance"},
+    "legal":            {"dev": 1.20, "infra": 1.10, "contingency": 0.12, "reason": "Document management, e-discovery, confidentiality controls"},
+    "hr":               {"dev": 1.00, "infra": 1.05, "contingency": 0.10, "reason": "Standard HRIS platform, employee data privacy"},
+    "nonprofit":        {"dev": 0.90, "infra": 1.00, "contingency": 0.10, "reason": "Budget-conscious, standard web platform"},
+    "saas":             {"dev": 1.15, "infra": 1.20, "contingency": 0.12, "reason": "Multi-tenancy, SOC 2 compliance, scalable infrastructure"},
+    "cloud":            {"dev": 1.15, "infra": 1.25, "contingency": 0.12, "reason": "Cloud-native architecture, FinOps, multi-cloud complexity"},
+    "cybersecurity":    {"dev": 1.35, "infra": 1.20, "contingency": 0.15, "reason": "Security tooling integration, SOC setup, compliance frameworks"},
+    "travel":           {"dev": 1.10, "infra": 1.20, "contingency": 0.12, "reason": "GDS integration, booking engine, seasonal traffic spikes"},
+    "food":             {"dev": 1.05, "infra": 1.15, "contingency": 0.10, "reason": "Delivery logistics, cold chain IoT, food safety compliance"},
+    "sports":           {"dev": 1.10, "infra": 1.20, "contingency": 0.10, "reason": "Live event infrastructure, fan engagement, analytics"},
+    "blockchain":       {"dev": 1.30, "infra": 1.15, "contingency": 0.15, "reason": "Smart contract auditing, node infrastructure, security reviews"},
+    "ai_ml":            {"dev": 1.30, "infra": 1.35, "contingency": 0.15, "reason": "GPU compute, model training infrastructure, MLOps pipelines"},
+}
+
+# Alias mapping (same as prompt_builder, kept in sync)
+_COST_INDUSTRY_ALIASES: dict[str, str] = {
+    "health": "healthcare", "medical": "healthcare", "hospital": "healthcare",
+    "pharma": "pharmaceuticals", "pharmaceutical": "pharmaceuticals", "biotech": "pharmaceuticals",
+    "banking": "finance", "bank": "finance", "financial": "finance",
+    "insurtech": "insurance",
+    "payments": "fintech", "lending": "fintech",
+    "e-commerce": "ecommerce", "ecom": "ecommerce", "online store": "ecommerce", "marketplace": "ecommerce",
+    "fmcg": "retail", "consumer goods": "retail",
+    "edtech": "education", "university": "education", "school": "education",
+    "factory": "manufacturing", "industrial": "manufacturing",
+    "supply chain": "logistics", "shipping": "logistics", "warehousing": "logistics", "transportation": "logistics",
+    "realestate": "real estate", "proptech": "real estate", "property": "real estate",
+    "telecommunications": "telecom", "telco": "telecom",
+    "power": "energy", "utilities": "energy", "oil and gas": "energy", "renewable": "energy", "solar": "energy",
+    "auto": "automotive", "electric vehicle": "automotive", "ev": "automotive",
+    "entertainment": "media", "streaming": "media", "ott": "media", "publishing": "media",
+    "game": "gaming", "esports": "gaming",
+    "agri": "agriculture", "farming": "agriculture", "agritech": "agriculture",
+    "govtech": "government", "public sector": "government",
+    "hotel": "hospitality", "tourism": "hospitality", "restaurant": "hospitality",
+    "infrastructure": "construction", "civil engineering": "construction",
+    "legaltech": "legal", "law firm": "legal", "law": "legal",
+    "human resources": "hr", "hrtech": "hr", "talent": "hr", "recruitment": "hr",
+    "ngo": "nonprofit", "social impact": "nonprofit", "charity": "nonprofit",
+    "software as a service": "saas", "b2b saas": "saas", "platform": "saas",
+    "cloud computing": "cloud", "devops": "cloud",
+    "infosec": "cybersecurity", "security": "cybersecurity",
+    "traveltech": "travel", "booking": "travel", "aviation": "travel",
+    "foodtech": "food", "food delivery": "food",
+    "sportstech": "sports", "fitness": "sports",
+    "web3": "blockchain", "crypto": "blockchain", "defi": "blockchain",
+    "artificial intelligence": "ai_ml", "machine learning": "ai_ml", "ai": "ai_ml", "data science": "ai_ml", "ml": "ai_ml",
+    "technology": "saas",
+}
+
+
+def _resolve_cost_industry(raw_industry: str) -> str | None:
+    """Fuzzy-match user input to known industry for cost multipliers."""
+    key = raw_industry.strip().lower()
+    if key in INDUSTRY_COST_MULTIPLIERS:
+        return key
+    if key in _COST_INDUSTRY_ALIASES:
+        return _COST_INDUSTRY_ALIASES[key]
+    for alias, canonical in _COST_INDUSTRY_ALIASES.items():
+        if alias in key or key in alias:
+            return canonical
+    return None
+
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# INDUSTRY-SPECIFIC TEAM ROLES
+# Additional specialised roles needed for certain industries
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+_INDUSTRY_EXTRA_ROLES: dict[str, list[dict]] = {
+    "healthcare": [{"role": "Health IT / Compliance Specialist", "count": 1, "allocation": "Part-time"}],
+    "finance":    [{"role": "Security / Compliance Analyst", "count": 1, "allocation": "Part-time"}],
+    "fintech":    [{"role": "Regulatory Compliance Engineer", "count": 1, "allocation": "Part-time"}],
+    "insurance":  [{"role": "Business Analyst (Insurance Domain)", "count": 1, "allocation": "Part-time"}],
+    "pharmaceuticals": [{"role": "GxP Validation Specialist", "count": 1, "allocation": "Part-time"}],
+    "manufacturing": [{"role": "Industrial IoT Engineer", "count": 1, "allocation": "Part-time"}],
+    "cybersecurity": [{"role": "Security Engineer / Penetration Tester", "count": 1, "allocation": "Part-time"}],
+    "government": [{"role": "Accessibility / Compliance Specialist", "count": 1, "allocation": "Part-time"}],
+    "ai_ml":      [{"role": "ML Engineer / Data Scientist", "count": 1, "allocation": "Full-time"}],
+    "blockchain": [{"role": "Smart Contract Developer / Auditor", "count": 1, "allocation": "Part-time"}],
+    "gaming":     [{"role": "Game Server / Infrastructure Engineer", "count": 1, "allocation": "Full-time"}],
+    "energy":     [{"role": "SCADA / OT Integration Specialist", "count": 1, "allocation": "Part-time"}],
+    "telecom":    [{"role": "Network Integration Engineer", "count": 1, "allocation": "Part-time"}],
+}
+
+
 def estimate_team_composition(
     duration_months: int,
     expected_users: int,
     tech_stack: list[str],
+    industry: str = "",
 ) -> list[dict]:
     """Return a deterministic team composition estimate.
 
-    Uses simple heuristic rules based on project size.
+    Uses heuristic rules based on project size and industry.
     No LLM involved; purely formula-driven so it never hallucinates.
     """
-    # Base team always has these roles
     team = [
         {"role": "Project Manager", "count": 1, "allocation": "Full-time"},
     ]
@@ -31,11 +142,7 @@ def estimate_team_composition(
     # Frontend developers: 1 per 4 months, min 1
     frontend_count = max(1, ceil(duration_months / 4))
     team.append(
-        {
-            "role": "Frontend Developer",
-            "count": frontend_count,
-            "allocation": "Full-time",
-        }
+        {"role": "Frontend Developer", "count": frontend_count, "allocation": "Full-time"}
     )
 
     # QA engineer: always at least 1
@@ -48,13 +155,8 @@ def estimate_team_composition(
 
     # UI/UX designer for any project with a frontend stack
     frontend_stacks = {
-        "react",
-        "vue.js",
-        "vue",
-        "angular",
-        "next.js",
-        "svelte",
-        "flutter",
+        "react", "vue.js", "vue", "angular", "next.js", "svelte", "flutter",
+        "react native", "swift", "kotlin", "ionic",
     }
     has_frontend = any(t.lower() in frontend_stacks for t in tech_stack)
     if has_frontend:
@@ -66,37 +168,70 @@ def estimate_team_composition(
             {"role": "Database Administrator", "count": 1, "allocation": "Part-time"}
         )
 
+    # Solution / Technical Architect for complex projects
+    if duration_months >= 6 or expected_users >= 50000:
+        team.append(
+            {"role": "Solution Architect", "count": 1, "allocation": "Part-time"}
+        )
+
+    # Business Analyst for longer projects
+    if duration_months >= 4:
+        team.append(
+            {"role": "Business Analyst", "count": 1, "allocation": "Part-time"}
+        )
+
+    # Industry-specific extra roles
+    resolved = _resolve_cost_industry(industry)
+    if resolved and resolved in _INDUSTRY_EXTRA_ROLES:
+        team.extend(_INDUSTRY_EXTRA_ROLES[resolved])
+
     return team
 
 
 def calculate_cost(
     duration_months: int,
     expected_users: int,
-    dev_rate_per_month: float = 150000.0,  # INR per month (reduced from USD)
+    dev_rate_per_month: float = 150000.0,  # INR per month
     contingency_pct: float = 0.10,
     discount_pct: float = 0.0,
+    industry: str = "",
 ):
-    """Return a detailed cost breakdown in INR.
+    """Return a detailed cost breakdown in INR with industry-aware multipliers.
 
+    - Applies industry-specific cost multipliers for development and infrastructure.
     - Uses tiered per-user infra pricing.
-    - Applies contingency to development cost.
+    - Applies industry-appropriate contingency rates.
     - Applies an optional overall discount.
-    - All values in Indian Rupees (INR)
+    - All values in Indian Rupees (INR).
     """
 
-    base_dev_cost = float(dev_rate_per_month) * duration_months
+    # Look up industry multipliers
+    resolved_industry = _resolve_cost_industry(industry)
+    multipliers = INDUSTRY_COST_MULTIPLIERS.get(resolved_industry or "", {})
+    dev_mult = multipliers.get("dev", 1.0)
+    infra_mult = multipliers.get("infra", 1.0)
+    industry_contingency = multipliers.get("contingency", contingency_pct)
+    cost_reason = multipliers.get("reason", "Standard technology project")
 
-    # Tiered infra cost per user in INR (converted from USD: 1 USD ~ 83 INR)
+    # Apply industry multiplier to dev rate
+    adjusted_dev_rate = float(dev_rate_per_month) * dev_mult
+    base_dev_cost = adjusted_dev_rate * duration_months
+
+    # Tiered infra cost per user in INR
     if expected_users <= 1000:
-        infra_per_user = 42.0  # 0.50 USD * 83
+        infra_per_user = 42.0
     elif expected_users <= 10000:
-        infra_per_user = 29.0  # 0.35 USD * 83
+        infra_per_user = 29.0
     else:
-        infra_per_user = 17.0  # 0.20 USD * 83
+        infra_per_user = 17.0
 
-    infra_cost = expected_users * infra_per_user
+    # Apply industry infra multiplier
+    infra_per_user_adjusted = infra_per_user * infra_mult
+    infra_cost = expected_users * infra_per_user_adjusted
 
-    contingency = base_dev_cost * float(contingency_pct)
+    # Use industry-specific contingency if higher
+    effective_contingency = max(float(contingency_pct), industry_contingency)
+    contingency = base_dev_cost * effective_contingency
 
     subtotal = base_dev_cost + infra_cost + contingency
 
@@ -113,13 +248,17 @@ def calculate_cost(
         "total_estimated_cost": round(total, 2),
         "monthly_average": round(monthly_average, 2),
         "currency": "INR",
+        "industry_applied": resolved_industry or "general",
+        "cost_adjustment_reason": cost_reason,
         "details": {
             "duration_months": int(duration_months),
             "expected_users": int(expected_users),
-            "infra_per_user": infra_per_user,
-            "dev_rate_per_month": float(dev_rate_per_month),
-            "contingency_pct": float(contingency_pct),
+            "infra_per_user": round(infra_per_user_adjusted, 2),
+            "dev_rate_per_month": round(adjusted_dev_rate, 2),
+            "contingency_pct": effective_contingency,
             "discount_pct": float(discount_pct),
+            "industry_dev_multiplier": dev_mult,
+            "industry_infra_multiplier": infra_mult,
         },
     }
 

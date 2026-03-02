@@ -4,3 +4,8 @@ pydantic
 requests
 fpdf2
 matplotlib
+Pillow
+python-multipart
+PyPDF2
+python-docx
+openpyxl
