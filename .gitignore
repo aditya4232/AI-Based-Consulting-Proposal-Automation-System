@@ -22,6 +22,9 @@ venv.bak/
 **/data/*.db
 **/data/*.sqlite3
 
+# HF Space clone (deployed separately)
+hf-space/
+
 # IDE / OS
 .vscode/
 .idea/
